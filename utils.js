@@ -98,6 +98,12 @@ module.exports = {
     var results = [];
     var eligiblePredictions = [];
 
+    // keep track of missing values to give the user an informative error message if they do not have predictions for some IDs that they do have for others. 
+    var missingPredictions = {};
+    classifierNames.forEach(function(clName) {
+      missingPredictions[clName] = 0;
+    });
+
     // TODO: use the actual header row here, instead of hard coding in these values like we are now
     results.push(['PassengerID','Survived']);
     // iterate through all the rows in our summary object, and pick out only the values from the eligible classifiers.
@@ -110,18 +116,37 @@ module.exports = {
       // TODO TODO: update classifierNames, as it will likely be an array
       // classifierNames is a key-mirror object where each key and value are both the classifierName
       // pick out only the values from the eligible classifiers
-      for (var classifierName in classifierNames) {
-        eligiblePredictions.push(summary[rowNum][classifierName]);
-      }
+      // TODO TODO: keep track of all the missing values
+        // console log that summary of missing values at the end
+        // for example, right now we probably don't have any predictions from the svm
+      classifierNames.forEach(function(clName) {
+        var predictedNum = summary[rowNum][clName];
+        if (predictedNum === undefined) {
+          missingPredictions[clName]++;
+        } else {
+          eligiblePredictions.push(predictedNum);
+        }
+      });
       // ensembleMethods holds all the ways we have of ensembling together the results from different predictions. 
       // each method takes in an array, and returns a single number
       var output = predictionCalculation(eligiblePredictions);
       results.push([rowNum, output]);
     }
+    var missingCount = 0;
+    for (var key in missingPredictions) {
+      missingCount += missingPredictions[key];
+    }
+    if (missingCount > 0) {
+      console.error('there were inconsistent IDs of predictions across classifiers');
+      console.error('these files were missing the following counts of IDs that other classifiers had predictions for :');
+      console.error(missingPredictions);
+    } else {
+      console.log('great, every file had predictions for the same set of IDs!');
+    }
     return results;
   },
 
-  writeToFile: function(locations, callback, results) {
+  writeToFile: function(fileNameIdentifier, locations, results, callback) {
     csv.writeToPath(path.join(locations.outputFolder, fileNameIdentifier + 'PredictedResults.csv'), results)
     .on('finish',function() {
       callback();
