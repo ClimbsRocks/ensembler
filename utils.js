@@ -7,26 +7,34 @@ var csv = require('fast-csv');
 
 module.exports = {
 
-  generateSummary: function(globalArgs, callback) {
+  generateSummary: function(fileNameIdentifier, locations, callback) {
 
-    fs.readdir(path.join(globalArgs.ppCompleteLocation,'predictions'), function(err,files) {
+    fs.readdir(locations.inputFolder, function(err,files) {
       if (err) {
-        console.error('there are no files in the "Predictions" folder. We need the predicted output from the classifiers in that folder in order to ensemble the results together. please run this library again, or copy/paste the results into the Predictions folder, to create an ensemble.');
-        callback();
+        console.error('there are no files in the input folder',locations.inputFolder);
+
+        console.error('. We need the predicted output from the classifiers in that folder in order to ensemble the results together. please run this library again, or copy/paste the results into the input folder, to create an ensemble.');
       } else {
         var fileCount = files.length;
         var finishedFiles = 0;
         files.forEach(function(fileName) {
 
-          if (fileName.slice(-4).toLowerCase() === '.csv') {
+          // only read .csv files, and make sure we only read in files that include the fileNameIdentifier the user passed in. 
+          if (fileName.slice(-4).toLowerCase() === '.csv' && fileName.indexOf(fileNameIdentifier) !== -1) {
             var prettyFileName = fileName.slice(0,-4);
-            var filePath = path.join(globalArgs.ppCompleteLocation,'predictions',fileName);
+
+            var filePath = path.join(locations.inputFolder,fileName);
             var firstRow = true;
 
+            // TODO: use a csv reader to read in the csv files. that prevents us from splitting on accidental commas in the middle of a field without doing crazy regex. 
             var pipingStream = byline(fs.createReadStream(filePath, {encoding: 'utf8'}));
             
             pipingStream.on('data', function(str) {
               var row = str.split(',');
+              // TODO: allow for the possibility of the json obj in the first row
+              // TODO: allow for the possibility of prettyNames in the second/third row
+              // TODO: grab the header row and write that back out to the csv at the end
+              // TODO: find which column is the ID column, and which is the prediction column
               if (firstRow) {
                 firstRow = false;
                 // skip it! 
@@ -41,6 +49,9 @@ module.exports = {
                   row[1] = parseFloat(row[1]);
                 }
 
+                // the fileName must, of course, be a unique identifier for this particular file. As such, it is quite useful as a unique identifier for the predictions contained in this file. 
+                // right now we are simply reading in all the results from the different files and loading them into one large in-memory object. 
+                // we are not yet performing any calculations or logic on the data. 
                 //the prediction is stored in the second column
                 summary[id][prettyFileName] = row[1];
                 
@@ -61,9 +72,13 @@ module.exports = {
 
         });
       }
+
       // handles off by one errors
       if(fileCount === 0) {
-        callback();
+        // after the else statement where we parsed through all the files, fileCount is going to be the number of eligible files. 
+        // while reading through the files is an asynch process, the process of determining if they are eligible to be read or not is synchronous. 
+        console.error('we found no eligible files in',locations.inputFolder);
+        console.error('please make sure that: \n 1. there are .csv files in that location, and \n 2. those .csv files include in their file names the string you passed in for the first argument to ensembler, which was:', fileNameIdentifier);
       }
 
 
@@ -71,29 +86,38 @@ module.exports = {
     
   },
 
+  // this method assumes we have already gone through to perform the logic of selecting both the best set of classifiers, as well as the best ensemble method for that particular set of classifiers. 
+  // right now, it defaults to all classifiers that met the criteria for generate summary (.csv file located in locations.inputFolder that had fileNameIdentifier somewhere in their file name), and assumes that averaging is the bestMethod. 
   calculateAggregatedPredictions: function(classifierNames, bestMethod) {
     var predictionCalculation = ensembleMethods[bestMethod];
     var results = [];
+    var eligiblePredictions = [];
+
+    // TODO: use the actual header row here, instead of hard coding in these values like we are now
     results.push(['PassengerID','Survived']);
+    // iterate through all the rows in our summary object, and pick out only the values from the eligible classifiers.
     for (var rowNum in summary) {
       // console.log('row:',row);
       // pick out only the predictions from the algos that were selected by createEnsemble:
-      var eligiblePredictions = [];
+      // reset eligiblePredictions to be an empty array for each row. 
+      eligiblePredictions = [];
 
+      // TODO TODO: update classifierNames, as it will likely be an array
       // classifierNames is a key-mirror object where each key and value are both the classifierName
+      // pick out only the values from the eligible classifiers
       for (var classifierName in classifierNames) {
         eligiblePredictions.push(summary[rowNum][classifierName]);
       }
       // ensembleMethods holds all the ways we have of ensembling together the results from different predictions. 
       // each method takes in an array, and returns a single number
-      var output = ensembleMethods[bestMethod](eligiblePredictions);
+      var output = predictionCalculation(eligiblePredictions);
       results.push([rowNum, output]);
     }
     return results;
   },
 
-  writeToFile: function(globalArgs, callback, results) {
-    csv.writeToPath(path.join(globalArgs.ppCompleteLocation, 'ppCompletePredictions.csv'), results)
+  writeToFile: function(locations, callback, results) {
+    csv.writeToPath(path.join(locations.outputFolder, fileNameIdentifier + 'PredictedResults.csv'), results)
     .on('finish',function() {
       callback();
     });
