@@ -48,6 +48,8 @@ Ensembling also reduces the risk of overfitting to the data, because introducing
 There are two public methods
 
 ## Format of input prediction files
+The input prediction files must all reside in the same folder, and must all be .csv filetypes. 
+
 The files must have an 'ID' column, and a column with the predicted results from the classifier. 
 
 The files may optionally have a column for observed value, called 'Observed Value'. This is the value that is known to be true for this row, as opposed to the predicions column, which holds the predicted value from the machine learning algorithm. Without the 'Observed Value' column, this ensembler will only be able to average the results together, as it would have no other way of determining which ensemble method is most accurate. 
@@ -63,5 +65,12 @@ The ID of predictions must be consistent across all prediction files. ensembler 
 Above the header row, the first row may optionally be a stringified JSON object. This JSON object must hold a property called 'jsonRow', set equal to `true`
 
 ## Format of output file
+The output file will simply have two columns, 'ID' and 'Predictions'. 
+
+If you passed in a 'prettyNames' row (with the additional 'prettyNames' column in the normal 'ID'/'Predictions' row), that prettyNames row is what will be the header row at the top of the output file instead of 'ID' and 'Predictions'. 
+
+The 'Observed Value' column will never be in the output file. 
+
+The output file will be a .csv filetype. 
 
 
