@@ -33,11 +33,35 @@ ensembler will go through and test your predictions files in two primary ways:
   - Taking a simple majority consensus for classification problems
   - Taking a weighted average
   - Taking a simple average (the only method currently implemented)
+  - Maybe some method that penalizes algorithms that overfit the training data, and perform relatively poorly on the test data? 
 
-What this does, effectively, is severely minimize the risk of including inaccurate classifiers. If the data says they're not helpful in making predictions against the dataset, we will not include them. 
+What this does, effectively, is  minimize the risk of including inaccurate classifiers. If the data says they're not helpful in making predictions against the dataset, we will not include them. 
+
+This, then, lets you go off and train as many classifiers as you would like, over whatever time period you like, and trust that ensembler will find the best combination of them for you. 
+
+Ensembling also reduces the risk of overfitting to the data, because introducing more classifiers will bring predicted values closer to an average prediction across multiple sources, rather than the (possibly highly biased) opinion of a single classifier. 
 
 ## Installation
 
 ## Use
 
 There are two public methods
+
+## Format of input prediction files
+The files must have an 'ID' column, and a column with the predicted results from the classifier. 
+
+The files may optionally have a column for observed value, called 'Observed Value'. This is the value that is known to be true for this row, as opposed to the predicions column, which holds the predicted value from the machine learning algorithm. Without the 'Observed Value' column, this ensembler will only be able to average the results together, as it would have no other way of determining which ensemble method is most accurate. 
+
+The file must have a header row specifying which column is the 'ID' column, and which is the prediction column. 
+
+The file may optionally contain a row below the header row that is the prettyNames. That is, the names you would like to see output in the final output file, if they are differen than 'ID' and 'Prediction'. Note that the 'Observed Value' column will NEVER be included in the final prediction file. 
+
+If you are including a prettyNames row, you must include an extra column in the standard 'ID'/'Predictions' row that simply says 'prettyNames'. This lets us know that the following row is what should appear at the top of the output file. 
+
+The ID of predictions must be consistent across all prediction files. ensembler matches up predictions across files based on this ID. 
+
+Above the header row, the first row may optionally be a stringified JSON object. This JSON object must hold a property called 'jsonRow', set equal to `true`
+
+## Format of output file
+
+
