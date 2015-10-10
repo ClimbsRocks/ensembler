@@ -4,6 +4,7 @@ var byline = require('byline');
 var summary = {};
 var ensembleMethods = require('./ensembleMethods.js');
 var csv = require('fast-csv');
+global.ensembleNamespace.summarizedAlgorithmNames = [];
 
 module.exports = {
 
@@ -21,7 +22,11 @@ module.exports = {
 
           // only read .csv files, and make sure we only read in files that include the fileNameIdentifier the user passed in. 
           if (fileName.slice(-4).toLowerCase() === '.csv' && fileName.indexOf(fileNameIdentifier) !== -1) {
+            // grab all the characters in the file name that are not '.csv' or the fileNameIdentifier that will be shared across all these files. 
+            // what we are left with is a unique string for just this file that is a unique identifier for this particular algorithm. 
             var prettyFileName = fileName.slice(0,-4);
+            prettyFileName = prettyFileName.split(fileNameIdentifier).join('');
+            global.ensembleNamespace.summarizedAlgorithmNames.push(prettyFileName);
 
             var filePath = path.join(locations.inputFolder,fileName);
             var firstRow = true;
