@@ -1,0 +1,37 @@
+{
+  "name": "ensembler",
+  "version": "0.2.0",
+  "description": "Ensemble together your machine learning algorithms automatically!",
+  "main": "controller.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ClimbsRocks/ensembler.git"
+  },
+  "keywords": [
+    "\"machine",
+    "learning\"",
+    "ensembles",
+    "\"data",
+    "science\"",
+    "\"kaggle\"",
+    "\"kaggle",
+    "competitions\"",
+    "bagging",
+    "\"ensemble",
+    "of",
+    "classifiers\"",
+    "\"automated",
+    "machine",
+    "learning\"",
+    "predictions"
+  ],
+  "author": "Preston Parry <climbsbytes@gmail.com> (prestonparry.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ClimbsRocks/ensembler/issues"
+  },
+  "homepage": "https://github.com/ClimbsRocks/ensembler#readme"
+}
