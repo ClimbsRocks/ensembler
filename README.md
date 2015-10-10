@@ -92,6 +92,10 @@ Above the header row, the first row may optionally be a stringified JSON object.
 
 
 ### Format of output file
+The file will be saved under a name that concatenates together the value you passed in for fileNameIdentifier and 'PredictedResults.csv'. 
+
+The file will be saved into the folder you specified with outputFolderLocation, or if you didn't pass in a value for that parameter, it will be saved two directories above the root folder for this repo. 
+
 The output file will simply have two columns, 'ID' and 'Predictions'. 
 
 If you passed in a 'prettyNames' row (with the additional 'prettyNames' column in the normal 'ID'/'Predictions' row), that prettyNames row is what will be the header row at the top of the output file instead of 'ID' and 'Predictions'. 
