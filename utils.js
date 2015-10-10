@@ -105,7 +105,7 @@ module.exports = {
     });
 
     // TODO: use the actual header row here, instead of hard coding in these values like we are now
-    results.push(['PassengerID','Survived']);
+    results.push(['ID','Probability']);
     // iterate through all the rows in our summary object, and pick out only the values from the eligible classifiers.
     for (var rowNum in summary) {
       // console.log('row:',row);
@@ -113,12 +113,7 @@ module.exports = {
       // reset eligiblePredictions to be an empty array for each row. 
       eligiblePredictions = [];
 
-      // TODO TODO: update classifierNames, as it will likely be an array
-      // classifierNames is a key-mirror object where each key and value are both the classifierName
       // pick out only the values from the eligible classifiers
-      // TODO TODO: keep track of all the missing values
-        // console log that summary of missing values at the end
-        // for example, right now we probably don't have any predictions from the svm
       classifierNames.forEach(function(clName) {
         var predictedNum = summary[rowNum][clName];
         if (predictedNum === undefined) {
@@ -127,21 +122,24 @@ module.exports = {
           eligiblePredictions.push(predictedNum);
         }
       });
+
       // ensembleMethods holds all the ways we have of ensembling together the results from different predictions. 
       // each method takes in an array, and returns a single number
       var output = predictionCalculation(eligiblePredictions);
       results.push([rowNum, output]);
     }
+
     var missingCount = 0;
     for (var key in missingPredictions) {
       missingCount += missingPredictions[key];
     }
+
     if (missingCount > 0) {
       console.error('there were inconsistent IDs of predictions across classifiers');
       console.error('these files were missing the following counts of IDs that other classifiers had predictions for :');
       console.error(missingPredictions);
     } else {
-      console.log('great, every file had predictions for the same set of IDs!');
+      console.log('great, every file had predictions for the exact same set of IDs!');
     }
     return results;
   },
