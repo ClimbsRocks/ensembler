@@ -30,12 +30,12 @@ module.exports = {
       // until we are ready for our version 3.0 release, we will simply pass it all of our classifiers, with the ensemble method of bagging them together. 
       var results = utils.calculateAggregatedPredictions(bestClassifierList, 'average');
       
-      utils.writeToFile(locations, function() {
-        console.log('We have just written the final predictions to a file called "ppCompletePredictions.csv" that is saved at:\n',locations.outputFolder + '/' + fileNameIdentifier + 'PredictedResults.csv');
+      utils.writeToFile(fileNameIdentifier, locations, results, function() {
+        console.log('We have just written the final predictions to a file called "' + fileNameIdentifier + 'PredictedResults.csv" that is saved at:\n',locations.outputFolder + '/' + fileNameIdentifier + 'PredictedResults.csv');
         console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
         // this is designed to work with ppComplete to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
         process.emit('killAll');
-      }, results);
+      });
       // generate the set that is the combination of all the algos we've trained so far
       // iterate through each row
         // for each item in that combination set, run through our whole ensembling logic, calculating the error rate for that row for that particular ensembling method
