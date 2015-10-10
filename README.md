@@ -34,6 +34,8 @@ ensembler will go through and test your predictions files in two primary ways:
   - Taking a weighted average
   - Taking a simple average (the only method currently implemented)
   - Maybe some method that penalizes algorithms that overfit the training data, and perform relatively poorly on the test data? 
+  - Maybe a method that increases the movement away from average slightly? So if we have a value of 0.8, and the average is 0.5, we would bump it up to 0.85 or something. 
+  - Maybe a method that moves each individual prediction slightly closer to the average of the whole dataset? 
 
 What this does, effectively, is  minimize the risk of including inaccurate classifiers. If the data says they're not helpful in making predictions against the dataset, we will not include them. 
 
