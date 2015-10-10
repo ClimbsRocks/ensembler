@@ -5,7 +5,15 @@ var argv;
 
 
 module.exports = {
-  createEnsemble: function(globalArgs) {
+  // fileNameIdentifier: please pass in some identifying string that will be in the fileNames of all the files we should run predictions on. The way I name my prediction files is to concat the classifier name and the original input data file name together, as in "neuralNetworkGiveMeSomeCredit.csv". In this way, all files in the predictions folder I point to, that have "GiveMeSomeCredit.csv" in their file name, will be predictions made by different classifiers on the GiveMeSomeCredit.csv data file. 
+  // The unique identifier then, that we would expect for fileNameIdentifier, is "GiveMeSomeCredit". 
+  // You can also pass in "all", and we will assume that all files in the inputFolderLocation are relevant to this dataset. 
+  createEnsemble: function(fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
+    // I think for the public interface, it is easiest to understand having the user pass in two folder paths. However, I think the code is easiest to read when we access it the following way:
+    var locations = {
+      inputFolder: inputFolderLocation,
+      outputFolder: outputFolderLocation
+    };
     // generateSummary reads in the prediction files from each classifier, and loads them into an in-memory object that matches them all up by rowID. 
     utils.generateSummary(globalArgs, function() {
 
@@ -34,7 +42,7 @@ module.exports = {
       // write to a file. 
     });
   },
-  startListeners: function(numOfAlgosToWaitOn, globalArgs) {
+  startListeners: function(numOfAlgosToWaitOn, inputFolderLocation, outputFolderLocation) {
     var finishedAlgos = 0;
     process.on('algoFinishedTraining', function() {
       finishedAlgos++;
