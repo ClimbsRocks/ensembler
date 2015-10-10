@@ -43,11 +43,35 @@ Ensembling also reduces the risk of overfitting to the data, because introducing
 
 ## Installation
 
+
 ## Use
 
-There are two public methods
 
-## Format of input prediction files
+### API
+There are two public methods, `createEnsemble`, and `startListeners`. 
+
+`startListeners` simply waits to invoke `createEnsemble` until it has heard the required number of 'algoFinishedTraining' events fire. This is mostly a convenience function for ppComplete, though you may find it useful. 
+
+#### `createEnsemble`
+This is the primary method ensembler makes available. 
+It takes in the following arguments:
+
+##### `inputFolderLocation`
+This argument is an absolute path to the folder that holds all the predictions from all the classifiers you have trained. Please see below for notes on the expected format of these files. 
+##### `outputFolderLocation` OPTIONAL
+This argument is optional. It is an absolute path to the location where we are writing the output file. If not passed in, it is assumed to be two directories above where ensembler is installed. This assumes that one directory up will be the node_modules folder, and two directories up will be the root directory of whatever repo you are working in. 
+
+##### `fileNameIdentifier`
+This argument is a unique string that appears in the name of all of the .csv files within this folder that we should include in ensembler. 
+
+You can also pass in 'all', which will assume that all .csv files in the inputFolderLocation should be included. 
+
+If you're looking for more details: please pass in some identifying string that will be in the fileNames of all the files we should run predictions on. The way I name my prediction files is to concat the classifier name and the original input data file name together, as in "neuralNetworkGiveMeSomeCredit.csv". In this way, all files in the predictions folder I point to, that have "GiveMeSomeCredit.csv" in their file name, will be predictions made by different classifiers on the GiveMeSomeCredit.csv data file. 
+
+The unique identifier then, that we would expect for fileNameIdentifier, is "GiveMeSomeCredit". 
+
+
+### Format of input prediction files
 The input prediction files must all reside in the same folder, and must all be .csv filetypes. 
 
 The files must have an 'ID' column, and a column with the predicted results from the classifier. 
@@ -64,7 +88,8 @@ The ID of predictions must be consistent across all prediction files. ensembler 
 
 Above the header row, the first row may optionally be a stringified JSON object. This JSON object must hold a property called 'jsonRow', set equal to `true`
 
-## Format of output file
+
+### Format of output file
 The output file will simply have two columns, 'ID' and 'Predictions'. 
 
 If you passed in a 'prettyNames' row (with the additional 'prettyNames' column in the normal 'ID'/'Predictions' row), that prettyNames row is what will be the header row at the top of the output file instead of 'ID' and 'Predictions'. 
