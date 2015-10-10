@@ -33,5 +33,9 @@
   "bugs": {
     "url": "https://github.com/ClimbsRocks/ensembler/issues"
   },
-  "homepage": "https://github.com/ClimbsRocks/ensembler#readme"
+  "homepage": "https://github.com/ClimbsRocks/ensembler#readme",
+  "dependencies": {
+    "byline": "^4.2.1",
+    "fast-csv": "^0.6.0"
+  }
 }
