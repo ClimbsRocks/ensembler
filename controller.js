@@ -1,3 +1,4 @@
+global.ensembleNamespace = {};
 var fs = require('fs');
 var path = require('path');
 var utils = require('./utils.js');
@@ -12,6 +13,7 @@ module.exports = {
     };
 
     // generateSummary reads in the prediction files from each classifier, and loads them into an in-memory object that matches them all up by rowID. 
+    // it takes a callback that will be invoked after reading all the files and loading in all the data. 
     utils.generateSummary(fileNameIdentifier, locations, function() {
 
       // FUTURE: 
@@ -19,15 +21,14 @@ module.exports = {
           // 2. for each combination of classifiers, run every single one of our ensembling methods
           // 3. pick the [combination of classifiers, ensembling method] pair that has the lowest error rate across the data set
 
-      // for now, we are just going to use all classifiers that we have trained. that means the python classifiers listed at ppComplete/pySetup/classifierList.js, as well as the neueralNetwork trained in a separate module within ppComplete.
-      // TODO TODO: get this list from generateSummary instead, based on the files that we have actually read in. 
-      var allClassifierList = require(path.join(globalArgs.ppCompleteLocation,'pySetup','classifierList.js'));
-      allClassifierList.neuralNetwork = 'neuralNetwork';
+      // as outlined above, at some point in the future, bestClassifierList will be a calculated value. 
+      // for now, just use all the classifiers whose data we have read in. 
+      var bestClassifierList = global.ensembleNamespace.summarizedAlgorithmNames;
+
 
       // calculateAggregatedPredictions uses the best combination of classifiers and ensembling method to create our final prediction. 
       // until we are ready for our version 3.0 release, we will simply pass it all of our classifiers, with the ensemble method of bagging them together. 
-      // TODO TODO: gather the list of classifierNames from the files themselves, rather than passing them in manually
-      var results = utils.calculateAggregatedPredictions(allClassifierList, 'average');
+      var results = utils.calculateAggregatedPredictions(bestClassifierList, 'average');
       
       utils.writeToFile(locations, function() {
         console.log('We have just written the final predictions to a file called "ppCompletePredictions.csv" that is saved at:\n',locations.outputFolder + '/' + fileNameIdentifier + 'PredictedResults.csv');
