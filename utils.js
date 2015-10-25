@@ -41,6 +41,7 @@ module.exports = {
               // TODO: grab the header row and write that back out to the csv at the end
               // TODO: find which column is the ID column, and which is the prediction column
               if (firstRow) {
+                global.ensembleNamespace.headerRow = row;
                 firstRow = false;
                 // skip it! 
               } else {
@@ -105,7 +106,7 @@ module.exports = {
     });
 
     // TODO: use the actual header row here, instead of hard coding in these values like we are now
-    results.push(['ID','Probability']);
+    results.push(global.ensembleNamespace.headerRow);
     // iterate through all the rows in our summary object, and pick out only the values from the eligible classifiers.
     for (var rowNum in summary) {
       // console.log('row:',row);
