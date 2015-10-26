@@ -149,7 +149,7 @@ module.exports = {
   },
 
   writeToFile: function(fileNameIdentifier, locations, results, callback) {
-    csv.writeToPath(path.join(locations.outputFolder, fileNameIdentifier + 'PredictedResults.csv'), results)
+    csv.writeToPath(path.join(locations.outputFolder, global.argv.outputFileName + 'ppcResults.csv'), results)
     .on('finish',function() {
       callback();
     });
