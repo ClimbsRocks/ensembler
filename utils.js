@@ -127,7 +127,7 @@ module.exports = {
       // ensembleMethods holds all the ways we have of ensembling together the results from different predictions. 
       // each method takes in an array, and returns a single number
       var output = predictionCalculation(eligiblePredictions);
-      if( global.ensembleNamespace.argv.binaryOutput === true ) {
+      if( global.argv.binaryOutput === 'true' ) {
         output = Math.round(output);
       }
       results.push([rowNum, output]);
