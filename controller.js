@@ -48,8 +48,9 @@ module.exports = {
   // this will likely be refactored back into ppComplete at some point. 
   startListeners: function(numOfAlgosToWaitOn, fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
     var finishedAlgos = 0;
-    process.on('algoFinishedTraining', function() {
+    process.on('algoFinishedPredicting', function() {
       finishedAlgos++;
+      console.log('numOfAlgosToWaitOn:', numOfAlgosToWaitOn, 'finishedAlgos:', finishedAlgos);
       if(finishedAlgos === numOfAlgosToWaitOn - 1) {
         // tell the neural net it's time to turn off the light, stop reading, and go to bed. 
         // the neural net is going to train itself until all the other processes have finished, that way it is as accurate as possible
