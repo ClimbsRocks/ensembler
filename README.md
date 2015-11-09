@@ -70,6 +70,16 @@ You can also pass in 'all', which will assume that all .csv files in the inputFo
 ##### `inputFolderLocation`
 This argument is an absolute path to the folder that holds all the predictions from all the classifiers you have trained. Please see below for notes on the expected format of these files. 
 
+##### `validationFolderLocation`
+This argument is an absolute path to the folder that holds all the predictions on the validation data set from all the classifiers you have trained. Please see below for notes on the expected format of these files. 
+The validation folder should have:
+- Predictions from all the classifiers you have trained, for each row of the validation data set
+  - Each of these files should have a column for predicted value, and an ID column
+- The full validation data set
+- The IDs for the validation data set
+- The y values for the validation data set. This lets us compare the predicted results to the actual results and use the observed values to determine how to ensemble the predictions together. 
+
+
 ##### `outputFolderLocation` OPTIONAL
 This argument is optional. It is an absolute path to the location where we are writing the output file. If not passed in, it is assumed to be two directories above where ensembler is installed. This assumes that one directory up will be the node_modules folder, and two directories up will be the root directory of whatever repo you are working in. 
 
