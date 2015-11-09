@@ -8,11 +8,12 @@ global.ensembleNamespace.summarizedAlgorithmNames = [];
 
 module.exports = {
 
-  generateSummary: function(fileNameIdentifier, locations, callback) {
+  generateSummary: function(args, callback) {
+    var fileNameIdentifier = args.fileNameIdentifier;
 
-    fs.readdir(locations.inputFolder, function(err,files) {
+    fs.readdir(args.inputFolder, function(err,files) {
       if (err) {
-        console.error('there are no files in the input folder',locations.inputFolder);
+        console.error('there are no files in the input folder',args.inputFolder);
 
         console.error('. We need the predicted output from the classifiers in that folder in order to ensemble the results together. please run this library again, or copy/paste the results into the input folder, to create an ensemble.');
       } else {
@@ -28,7 +29,7 @@ module.exports = {
             prettyFileName = prettyFileName.split(fileNameIdentifier).join('');
             global.ensembleNamespace.summarizedAlgorithmNames.push(prettyFileName);
 
-            var filePath = path.join(locations.inputFolder,fileName);
+            var filePath = path.join(args.inputFolder,fileName);
             var firstRow = true;
 
             // TODO: use a csv reader to read in the csv files. that prevents us from splitting on accidental commas in the middle of a field without doing crazy regex. 
@@ -83,7 +84,7 @@ module.exports = {
       if(fileCount === 0) {
         // after the else statement where we parsed through all the files, fileCount is going to be the number of eligible files. 
         // while reading through the files is an asynch process, the process of determining if they are eligible to be read or not is synchronous. 
-        console.error('we found no eligible files in',locations.inputFolder);
+        console.error('we found no eligible files in',args.inputFolder);
         console.error('please make sure that: \n 1. there are .csv files in that location, and \n 2. those .csv files include in their file names the string you passed in for the first argument to ensembler, which was:', fileNameIdentifier);
       }
 
@@ -93,7 +94,7 @@ module.exports = {
   },
 
   // this method assumes we have already gone through to perform the logic of selecting both the best set of classifiers, as well as the best ensemble method for that particular set of classifiers. 
-  // right now, it defaults to all classifiers that met the criteria for generate summary (.csv file located in locations.inputFolder that had fileNameIdentifier somewhere in their file name), and assumes that averaging is the bestMethod. 
+  // right now, it defaults to all classifiers that met the criteria for generate summary (.csv file located in args.inputFolder that had fileNameIdentifier somewhere in their file name), and assumes that averaging is the bestMethod. 
   calculateAggregatedPredictions: function(classifierNames, bestMethod) {
     var predictionCalculation = ensembleMethods[bestMethod];
     var results = [];
@@ -148,8 +149,8 @@ module.exports = {
     return results;
   },
 
-  writeToFile: function(fileNameIdentifier, locations, results, callback) {
-    csv.writeToPath(path.join(locations.outputFolder, global.argv.outputFileName + 'ppcResults.csv'), results)
+  writeToFile: function(fileNameIdentifier, args, results, callback) {
+    csv.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'ppcResults.csv'), results)
     .on('finish',function() {
       callback();
     });

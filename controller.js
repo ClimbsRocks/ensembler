@@ -5,16 +5,18 @@ var utils = require('./utils.js');
 
 
 module.exports = {
-  createEnsemble: function(fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
-    // I think for the public interface, it is easiest to understand having the user pass in two folder paths. However, I think the code is easiest to read when we access it the following way:
-    var locations = {
-      inputFolder: inputFolderLocation,
-      outputFolder: outputFolderLocation
-    };
+  // createEnsemble: function(fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
+  createEnsemble: function(args) {
+    var fileNameIdentifier = args.fileNameIdentifier;
+    // // I think for the public interface, it is easiest to understand having the user pass in two folder paths. However, I think the code is easiest to read when we access it the following way:
+    // var locations = {
+    //   inputFolder: inputFolderLocation,
+    //   outputFolder: outputFolderLocation
+    // };
 
     // generateSummary reads in the prediction files from each classifier, and loads them into an in-memory object that matches them all up by rowID. 
     // it takes a callback that will be invoked after reading all the files and loading in all the data. 
-    utils.generateSummary(fileNameIdentifier, locations, function() {
+    utils.generateSummary( args, function() {
 
       // FUTURE: 
         // 1. Test all combinations of number of classifiers among the ones we've trained
@@ -30,8 +32,8 @@ module.exports = {
       // until we are ready for our version 3.0 release, we will simply pass it all of our classifiers, with the ensemble method of bagging them together. 
       var results = utils.calculateAggregatedPredictions(bestClassifierList, 'average');
       
-      utils.writeToFile(fileNameIdentifier, locations, results, function() {
-        console.log('We have just written the final predictions to a file called "' + fileNameIdentifier + 'PredictedResults.csv" that is saved at:\n',locations.outputFolder + '/' + fileNameIdentifier + 'PredictedResults.csv');
+      utils.writeToFile(fileNameIdentifier, args, results, function() {
+        console.log('We have just written the final predictions to a file called "' + fileNameIdentifier + 'PredictedResults.csv" that is saved at:\n',args.outputFolder + '/' + fileNameIdentifier + 'PredictedResults.csv');
         console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
         // this is designed to work with ppComplete to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
         process.emit('killAll');
@@ -46,7 +48,8 @@ module.exports = {
 
   // this method is primarily designed to work with ppComplete. It is simply a way of determining when we will invoke makeEnsemble. 
   // this will likely be refactored back into ppComplete at some point. 
-  startListeners: function(numOfAlgosToWaitOn, fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
+  // startListeners: function(numOfAlgosToWaitOn, fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
+  startListeners: function(numOfAlgosToWaitOn, args) {
     var finishedAlgos = 0;
     process.on('algoFinishedPredicting', function() {
       finishedAlgos++;
@@ -56,7 +59,8 @@ module.exports = {
         // the neural net is going to train itself until all the other processes have finished, that way it is as accurate as possible
         process.emit('stopTraining');
       } else if( finishedAlgos === numOfAlgosToWaitOn ) {
-        module.exports.createEnsemble(fileNameIdentifier, inputFolderLocation, outputFolderLocation);
+        module.exports.createEnsemble(args);
+        // module.exports.createEnsemble(fileNameIdentifier, inputFolderLocation, outputFolderLocation);
       }
     });
 
