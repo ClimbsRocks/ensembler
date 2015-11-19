@@ -4,6 +4,7 @@ var path = require('path');
 var utils = require('./utils.js');
 
 
+
 module.exports = {
   // createEnsemble: function(fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
   createEnsemble: function(args) {
@@ -50,10 +51,8 @@ module.exports = {
   // this will likely be refactored back into ppComplete at some point. 
   // startListeners: function(numOfAlgosToWaitOn, fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
   startListeners: function(numOfAlgosToWaitOn, args) {
-    var finishedAlgos = 0;
-    process.on('algoFinishedPredicting', function() {
-      finishedAlgos++;
-      console.log('numOfAlgosToWaitOn:', numOfAlgosToWaitOn, 'finishedAlgos:', finishedAlgos);
+
+    function checkIfFinished() {
       if(finishedAlgos === numOfAlgosToWaitOn - 1) {
         // tell the neural net it's time to turn off the light, stop reading, and go to bed. 
         // the neural net is going to train itself until all the other processes have finished, that way it is as accurate as possible
@@ -62,6 +61,21 @@ module.exports = {
         module.exports.createEnsemble(args);
         // module.exports.createEnsemble(fileNameIdentifier, inputFolderLocation, outputFolderLocation);
       }
+    }
+
+    var finishedAlgos = 0;
+
+    process.on('algoFinishedPredicting', function() {
+      finishedAlgos++;
+      console.log('numOfAlgosToWaitOn:', numOfAlgosToWaitOn, 'finishedAlgos:', finishedAlgos);
+      checkIfFinished();
+    });
+
+    // if an algorithm has not proven effectice for this data set after a certain number of tries, we are not going to train any more of them.
+    // but, since we said at the start to expect a certain number of algorithms to be trained, we must still emit an event to notify ensembler that we are skipping over an algorithm
+    process.on('algoSkippedTraining', function() {
+      finishedAlgos++;
+      checkIfFinished();
     });
 
   }
