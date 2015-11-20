@@ -37,6 +37,7 @@
   "dependencies": {
     "byline": "^4.2.1",
     "csv": "^0.4.6",
-    "fast-csv": "^0.6.0"
+    "fast-csv": "^0.6.0",
+    "fs-extra": "^0.26.2"
   }
 }
