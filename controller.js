@@ -8,6 +8,13 @@ var utils = require('./utils.js');
 module.exports = {
   // createEnsemble: function(fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
   createEnsemble: function(args) {
+    // we're actually going to be running through ensembler twice: 
+      // once for the validation data set
+      // once for the actual predictions data set
+    // if the user doesn't pass in a value, we'll assume they just want predictions
+    if( args.validationRound === undefined ) {
+      args.validationRound = false;
+    }
     var fileNameIdentifier = args.fileNameIdentifier;
     global.ensembleNamespace.fileNameIdentifier = args.fileNameIdentifier;
     // // I think for the public interface, it is easiest to understand having the user pass in two folder paths. However, I think the code is easiest to read when we access it the following way:
