@@ -12,7 +12,7 @@ module.exports = {
 
   findFiles: function(args, findFilesCallback) {
     var fileNameIdentifier = args.fileNameIdentifier;
-    global.ensembleNamespace.scores={};
+    global.ensembleNamespace.scores = [];
 
     fs.readdir(args.inputFolder, function(err,files) {
       if (err) {
@@ -74,7 +74,7 @@ module.exports = {
             console.log(filePath);
             console.error(err);
           } else {
-            readOneFileCallback(output, args, prettyFileName);
+            readOneFileCallback(output, args, fileName);
           }
         });
       });
@@ -84,11 +84,19 @@ module.exports = {
     }
   },
 
-  processOneFilesData: function(output, args, prettyFileName) {
+  processOneFilesData: function(output, args, fileName) {
+    var fileNameIdentifier = args.fileNameIdentifier;
+    var prettyFileName = fileName.slice(0,-4);
+    prettyFileName = prettyFileName.split(fileNameIdentifier).join('');
+
     var fileNameIdentifier = args.fileNameIdentifier;
     
     // the first row holds the validationScore and trainingScore for this algorithm
-    global.ensembleNamespace.scores[fileNameIdentifier] = output[0];
+    var scoresObj = {
+      scores: output[0],
+      fileName: fileNameIdentifier
+    };
+    global.ensembleNamespace.scores.push(scoresObj);
     // the second row holds the headerRow
     global.ensembleNamespace.headerRow = output[1];
 
@@ -116,13 +124,20 @@ module.exports = {
     global.ensembleNamespace.finishedFiles++;
     if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
       // TODO: figure out which callback is supposed to be invoked here.
-      args.generateSummaryCallback();
+      module.exports.copyBestScores(args);
     }
   },
 
+  copyBestScores: function(args) {
+    global.ensembleNamespace.scores.sort(function(algo1,algo2) {
+      return algo1.scores[0] - algo2.scores[0];
+    });
+    console.log('sorted scores!');
+    console.log(global.ensembleNamespace.scores);
+    args.generateSummaryCallback();
+  },
+
   generateSummary: function(args, callback) {
-    var fileNameIdentifier = args.fileNameIdentifier;
-    global.ensembleNamespace.scores={};
 
     args.generateSummaryCallback = callback;
 
@@ -143,7 +158,6 @@ module.exports = {
       missingPredictions[clName] = 0;
     });
 
-    // TODO: use the actual header row here, instead of hard coding in these values like we are now
     results.push(global.ensembleNamespace.headerRow);
     // iterate through all the rows in our summary object, and pick out only the values from the eligible classifiers.
     for (var rowNum in summary) {
