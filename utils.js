@@ -10,6 +10,7 @@ module.exports = {
 
   generateSummary: function(args, callback) {
     var fileNameIdentifier = args.fileNameIdentifier;
+    global.ensembleNamespace.scores={};
 
     fs.readdir(args.inputFolder, function(err,files) {
       if (err) {
@@ -31,6 +32,7 @@ module.exports = {
 
             var filePath = path.join(args.inputFolder,fileName);
             var firstRow = true;
+            var scoresRow = true;
 
             // TODO: use a csv reader to read in the csv files. that prevents us from splitting on accidental commas in the middle of a field without doing crazy regex. 
             var pipingStream = byline(fs.createReadStream(filePath, {encoding: 'utf8'}));
@@ -41,7 +43,10 @@ module.exports = {
               // TODO: allow for the possibility of prettyNames in the second/third row
               // TODO: grab the header row and write that back out to the csv at the end
               // TODO: find which column is the ID column, and which is the prediction column
-              if (firstRow) {
+              if( scoresRow ) {
+                global.ensembleNamespace.scores[fileNameIdentifier] = row;
+                scoresRow = false;
+              } else if (firstRow) {
                 global.ensembleNamespace.headerRow = row;
                 firstRow = false;
                 // skip it! 
@@ -131,7 +136,7 @@ module.exports = {
       if( global.argv.binaryOutput === 'true' ) {
         output = Math.round(output);
       }
-      results.push([rowNum, output]);
+      results.push([parseInt(rowNum, 10), output]);
     }
 
     var missingCount = 0;
