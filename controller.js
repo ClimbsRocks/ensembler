@@ -14,6 +14,9 @@ module.exports = {
     // if the user doesn't pass in a value, we'll assume they just want predictions
     if( args.validationRound === undefined ) {
       args.validationRound = false;
+    } else {
+      // this is the case that validationRound is true
+      args.inputFolder = path.join(args.inputFolder, 'validation');
     }
     var fileNameIdentifier = args.fileNameIdentifier;
     global.ensembleNamespace.fileNameIdentifier = args.fileNameIdentifier;
