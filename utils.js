@@ -3,7 +3,8 @@ var path = require('path');
 var byline = require('byline');
 var summary = {};
 var ensembleMethods = require('./ensembleMethods.js');
-var csv = require('fast-csv');
+var fastCSV = require('fast-csv');
+var csv = require('csv');
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 
 module.exports = {
@@ -31,57 +32,61 @@ module.exports = {
             global.ensembleNamespace.summarizedAlgorithmNames.push(prettyFileName);
 
             var filePath = path.join(args.inputFolder,fileName);
-            var firstRow = true;
-            var scoresRow = true;
 
-            // TODO: use a csv reader to read in the csv files. that prevents us from splitting on accidental commas in the middle of a field without doing crazy regex. 
-            var pipingStream = byline(fs.createReadStream(filePath, {encoding: 'utf8'}));
-            
-            pipingStream.on('data', function(str) {
-              var row = str.split(',');
-              // TODO: allow for the possibility of the json obj in the first row
-              // TODO: allow for the possibility of prettyNames in the second/third row
-              // TODO: grab the header row and write that back out to the csv at the end
-              // TODO: find which column is the ID column, and which is the prediction column
-              if( scoresRow ) {
-                global.ensembleNamespace.scores[fileNameIdentifier] = row;
-                scoresRow = false;
-              } else if (firstRow) {
-                global.ensembleNamespace.headerRow = row;
-                firstRow = false;
-                // skip it! 
-              } else {
-                // the id is stored in the first column
-                var id = row[0];
-                if(summary[id] === undefined) {
-                  summary[id] = {};
-                }
-                // the predicted values might have gotten saved as strings when we want them to be numbers. if so, convert them to numbers here.
-                if(parseFloat(row[1]) !== NaN) {
-                  row[1] = parseFloat(row[1]);
+            // read in this predictions file
+            fs.readFile(filePath, function(err, data) {
+              if(err) {
+                console.log('we had trouble reading in a file.');
+                console.error(err);
+              }
+
+              // turn the blob of text into rows
+              csv.parse(data, function(err, output) {
+                if(err) {
+                  console.log('we had trouble interpreting this file\'s data as csv data');
+                  console.log(filePath);
+                  console.error(err);
                 }
 
-                // the fileName must, of course, be a unique identifier for this particular file. As such, it is quite useful as a unique identifier for the predictions contained in this file. 
-                // right now we are simply reading in all the results from the different files and loading them into one large in-memory object. 
-                // we are not yet performing any calculations or logic on the data. 
-                //the prediction is stored in the second column
-                summary[id][prettyFileName] = row[1];
-                
-              }
-            });
+                // the first row holds the validationScore and trainingScore for this algorithm
+                global.ensembleNamespace.scores[fileNameIdentifier] = output[0];
+                // the second row holds the headerRow
+                global.ensembleNamespace.headerRow = output[1];
 
-            pipingStream.on('end', function() {
-              finishedFiles++;
-              if(finishedFiles === fileCount) {
-                callback();
-              }
-            });
 
+                for(var i = 2; i < output.length; i++) {
+                  var row = output[i];
+                  // the id is stored in the first column
+                  var id = row[0];
+                  if(summary[id] === undefined) {
+                    summary[id] = {};
+                  }
+                  // the predicted values might have gotten saved as strings when we want them to be numbers. if so, convert them to numbers here.
+                  if(parseFloat(row[1]) !== NaN) {
+                    row[1] = parseFloat(row[1]);
+                  }
+
+                  // the fileName must, of course, be a unique identifier for this particular file. As such, it is quite useful as a unique identifier for the predictions contained in this file. 
+                  // right now we are simply reading in all the results from the different files and loading them into one large in-memory object. 
+                  // we are not yet performing any calculations or logic on the data. 
+                  //the prediction is stored in the second column
+
+                  // summary object, for this rowID, for this algorithm (prettyFileName), is equal to the current prediction
+                  summary[id][prettyFileName] = row[1];
+                    
+                }
+
+                finishedFiles++;
+                if(finishedFiles === fileCount) {
+                  callback();
+                }
+
+              });
+            });
           } else {
             // if the file is not a .csv file, we will ignore it, and remove it from our count of files to parse
             fileCount--;
           }
-
         });
       }
 
@@ -92,10 +97,7 @@ module.exports = {
         console.error('we found no eligible files in',args.inputFolder);
         console.error('please make sure that: \n 1. there are .csv files in that location, and \n 2. those .csv files include in their file names the string you passed in for the first argument to ensembler, which was:', fileNameIdentifier);
       }
-
-
     });
-    
   },
 
   // this method assumes we have already gone through to perform the logic of selecting both the best set of classifiers, as well as the best ensemble method for that particular set of classifiers. 
@@ -155,7 +157,8 @@ module.exports = {
   },
 
   writeToFile: function(fileNameIdentifier, args, results, callback) {
-    csv.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'ppcResults.csv'), results)
+    // TODO: refactor to use the csv module.
+    fastCSV.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'ppcResults.csv'), results)
     .on('finish',function() {
       callback();
     });
