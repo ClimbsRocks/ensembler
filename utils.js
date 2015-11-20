@@ -8,6 +8,8 @@ var ensembleMethods = require('./ensembleMethods.js');
 var fastCSV = require('fast-csv');
 var csv = require('csv');
 global.ensembleNamespace.summarizedAlgorithmNames = [];
+global.ensembleNamespace.predictionsMatrix = [];
+global.ensembleNamespace.validationMatrix = [];
 
 module.exports = {
 
@@ -17,14 +19,12 @@ module.exports = {
 
     fs.readdir(args.inputFolder, function(err,files) {
       if (err) {
-        console.error('there are no files in the input folder',args.inputFolder);
+        console.error('there are no files in the input folder:',args.inputFolder);
 
-        console.error('. We need the predicted output from the classifiers in that folder in order to ensemble the results together. please run this library again, or copy/paste the results into the input folder, to create an ensemble.');
+        console.error('We need the predicted output from the classifiers in that folder in order to ensemble the results together. Please run this library again, or copy/paste the results into the input folder, to create an ensemble.');
       } else {
         findFilesCallback(args, files);
       }
-
-
     });
   },
 
@@ -46,7 +46,6 @@ module.exports = {
       console.error('we found no eligible files in',args.inputFolder);
       console.error('please make sure that: \n 1. there are .csv files in that location, and \n 2. those .csv files include in their file names the string you passed in for the first argument to ensembler, which was:', fileNameIdentifier);
     }
-
   },
 
   readOneFile: function(args, fileName, readOneFileCallback) {
@@ -85,7 +84,22 @@ module.exports = {
     }
   },
 
-  processOneFilesData: function(output, args, fileName) {
+  checkIfMatrixIsEmpty: function(matrixLength) {
+    if( global.ensembleNamespace.validationMatrix[0] === undefined) {
+      for (var i = 0; i < matrixLength; i++) {
+        global.ensembleNamespace.validationMatrix.push([]);
+      }
+    }
+  },
+
+  processOneFilesDataMatrix: function(data, args) {
+    checkIfMatrixIsEmpty(data.length);
+    for( var i = 0; i < data.length; i++ ){
+      global.ensembleNamespace.validationMatrix[i].push(data[i]);
+    }
+  },
+
+  processOneFilesData: function(data, args, fileName) {
     var fileNameIdentifier = args.fileNameIdentifier;
     var prettyFileName = fileName.slice(0,-4);
     prettyFileName = prettyFileName.split(fileNameIdentifier).join('');
@@ -94,15 +108,15 @@ module.exports = {
     
     // the first row holds the validationScore and trainingScore for this algorithm
     var scoresObj = {
-      scores: output[0],
+      scores: data[0],
       fileName: fileName
     };
     global.ensembleNamespace.scores.push(scoresObj);
     // the second row holds the headerRow
-    global.ensembleNamespace.headerRow = output[1];
+    global.ensembleNamespace.headerRow = data[1];
 
-    for(var i = 2; i < output.length; i++) {
-      var row = output[i];
+    for(var i = 2; i < data.length; i++) {
+      var row = data[i];
       // the id is stored in the first column
       var id = row[0];
       if(summary[id] === undefined) {
@@ -149,6 +163,7 @@ module.exports = {
     var bestFolder = path.join(args.inputFolder, 'bestScores' + global.ensembleNamespace.fileNameIdentifier);
     fse.mkdirpSync( bestFolder );
 
+    // copy our 5 best scores into their own folder. this lets us see quickly which algos worked, and then have our best results easily available for analysis.
     for( var i = 0; i < 5; i++) {
       var predictionFile = global.ensembleNamespace.scores[i].fileName;
       var sourceFile = path.join( args.inputFolder, predictionFile );
@@ -156,6 +171,10 @@ module.exports = {
       fse.copySync(sourceFile, destinationFile);
     }
     args.generateSummaryCallback();
+  },
+
+  turnSummaryIntoMatrix: function(args) {
+    for( var i = 0; i )
   },
 
   generateSummary: function(args, callback) {
