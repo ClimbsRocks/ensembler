@@ -28,7 +28,16 @@ module.exports = {
       // as outlined above, at some point in the future, bestClassifierList will be a calculated value. 
       // for now, just use all the classifiers whose data we have read in. 
       var bestClassifierList = global.ensembleNamespace.summarizedAlgorithmNames;
+      // var bestClassifierList = [];
+      // var scoresObjs = global.ensembleNamespace.scores;
 
+      // // our bestScore is going to be the first one. within that row, we care about the validation score, at position 0.
+      // var bestScore = scoresObjs[0].scores[0];
+      // for( var i = 0; i < scoresObjs.length; i++ ) {
+      //   if( i < 5 || scoresObjs[i].scores[0] > .98 * bestScore ) {
+      //     bestClassifierList.push(scoresObjs[i].scores[0]);
+      //   }
+      // }
 
       // calculateAggregatedPredictions uses the best combination of classifiers and ensembling method to create our final prediction. 
       // until we are ready for our version 3.0 release, we will simply pass it all of our classifiers, with the ensemble method of bagging them together. 
