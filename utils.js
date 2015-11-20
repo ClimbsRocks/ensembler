@@ -1,4 +1,5 @@
 var fs = require('fs');
+var fse = require('fs-extra');
 var path = require('path');
 var byline = require('byline');
 // TODO: rename summary to predictionsSummary
@@ -94,7 +95,7 @@ module.exports = {
     // the first row holds the validationScore and trainingScore for this algorithm
     var scoresObj = {
       scores: output[0],
-      fileName: fileNameIdentifier
+      fileName: fileName
     };
     global.ensembleNamespace.scores.push(scoresObj);
     // the second row holds the headerRow
@@ -129,11 +130,31 @@ module.exports = {
   },
 
   copyBestScores: function(args) {
+
+    // sort the array holding all of our validation and training scores:
     global.ensembleNamespace.scores.sort(function(algo1,algo2) {
-      return algo1.scores[0] - algo2.scores[0];
+      try {
+        // scores is an array with validation and training scores from machineJS. 
+        // the validation score is at index 0. 
+        return parseFloat(algo1.scores[0]) - parseFloat(algo2.scores[0]);
+      } catch(err) {
+        return algo1.scores[0] - algo2.scores[0];
+      }
     });
+    global.ensembleNamespace.scores.reverse();
+
     console.log('sorted scores!');
     console.log(global.ensembleNamespace.scores);
+
+    var bestFolder = path.join(args.inputFolder, 'bestScores' + global.ensembleNamespace.fileNameIdentifier);
+    fse.mkdirpSync( bestFolder );
+
+    for( var i = 0; i < 5; i++) {
+      var predictionFile = global.ensembleNamespace.scores[i].fileName;
+      var sourceFile = path.join( args.inputFolder, predictionFile );
+      var destinationFile = path.join( bestFolder, predictionFile );
+      fse.copySync(sourceFile, destinationFile);
+    }
     args.generateSummaryCallback();
   },
 
