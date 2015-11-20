@@ -9,6 +9,7 @@ module.exports = {
   // createEnsemble: function(fileNameIdentifier, inputFolderLocation, outputFolderLocation) {
   createEnsemble: function(args) {
     var fileNameIdentifier = args.fileNameIdentifier;
+    global.ensembleNamespace.fileNameIdentifier = args.fileNameIdentifier;
     // // I think for the public interface, it is easiest to understand having the user pass in two folder paths. However, I think the code is easiest to read when we access it the following way:
     // var locations = {
     //   inputFolder: inputFolderLocation,
