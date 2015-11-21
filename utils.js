@@ -34,7 +34,7 @@ module.exports = {
 
     // TODO: do this on a setInterval, so that if we are eventually reading in 1000 files, we can do that at a steady pace, rather than all at once. 
     files.forEach(function(fileName) {
-      module.exports.readOneFile(args, fileName, module.exports.processOneFilesData);
+      module.exports.readOneFile(args, fileName, module.exports.processOneFilesDataMatrix);
     });
 
     // handles off by one errors
@@ -93,20 +93,27 @@ module.exports = {
     }
   },
 
-  processOneFilesDataMatrix: function(data, args) {
+  processOneFilesDataMatrix: function(data, args, fileName) {
     // i know it's weird to see, but checkIfMatrixIsEmpty is synchronous. 
-    checkIfMatrixIsEmpty(data.length);
+    module.exports.checkIfMatrixIsEmpty(data.length);
 
+    // TODO: verify matrix's shape to make sure we have the same number of predictions across all classifiers.
     for( var i = 0; i < data.length; i++ ){
       global.ensembleNamespace.dataMatrix[i].push(data[i]);
     }
+
+    module.exports.averageResults(args);
   },
 
-  averageResults: function() {
+  averageResults: function(args) {
     var idAndPredictionsByRow = [];
+    console.log('args:');
+    console.log(args);
     for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++ ) {
 
       var row = global.ensembleNamespace.dataMatrix[i];
+
+
       var sum = 0;
       for(var i = 0; i < row.length; i++) {
         sum += row[i];
@@ -115,7 +122,7 @@ module.exports = {
 
       // TODO: get the id for this row somehow.
 
-      idAndPredictionsByRow.push([getIdSomehow, rowAverage]);
+      // idAndPredictionsByRow.push([getIdSomehow, rowAverage]);
     }
   },
 
@@ -258,7 +265,6 @@ module.exports = {
 
   writeToFile: function(fileNameIdentifier, args, results, callback) {
     // TODO: refactor to use the csv module.
-    console.log('results:',results);
     fastCSV.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'ppcResults.csv'), results)
     .on('finish',function() {
       callback();
