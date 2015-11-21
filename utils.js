@@ -86,22 +86,38 @@ module.exports = {
 
   checkIfMatrixIsEmpty: function(matrixLength) {
     // populate the matrix with empty arrays for each row if the matrix is empty
+    var returnVal = false;
     if( global.ensembleNamespace.dataMatrix[0] === undefined) {
+      returnVal = true;
       for (var i = 0; i < matrixLength; i++) {
         global.ensembleNamespace.dataMatrix.push([]);
       }
     }
+    return returnVal
   },
 
   processOneFilesDataMatrix: function(data, args, fileName) {
     // i know it's weird to see, but checkIfMatrixIsEmpty is synchronous. 
-    module.exports.checkIfMatrixIsEmpty(data.length);
+    var matrixIsEmpty = module.exports.checkIfMatrixIsEmpty(data.length);
+    
+    if( matrixIsEmpty ) {
+      // push the row IDs in as the first item in each row
+      for(var i = 0; i < data.length; i++) {
+        var id = data[i][0];
+        global.ensembleNamespace.dataMatrix[i].push(id);
+      }
+    }
 
     // TODO: verify matrix's shape to make sure we have the same number of predictions across all classifiers.
     for( var i = 0; i < data.length; i++ ){
-      global.ensembleNamespace.dataMatrix[i].push(data[i]);
-    }
+      // data[i] is an array holding two values: the id for that row, and the actual predicted result.
+      var id = data[i][0];
+      var prediction = data[i][1];
 
+      // TODO: verification. make sure this ID is the same as the id stored as the first item in the dataMatrix[i] array.
+      global.ensembleNamespace.dataMatrix[i].push(prediction);
+    }
+    
     module.exports.averageResults(args);
   },
 
@@ -115,14 +131,22 @@ module.exports = {
 
 
       var sum = 0;
-      for(var i = 0; i < row.length; i++) {
+      // the first item in each row is the ID for that row, so we will ignore that while summing.
+      for(var i = 1; i < row.length; i++) {
         sum += row[i];
       }
       var rowAverage = sum / row.length;
 
       // TODO: get the id for this row somehow.
+      // the IDs are held in a csv file in the validation folder called:
+      // 'validationIDsAndY.csv'
+      // but it's called something different in our predictions folder
+      // we'll want to lay out what our IDs file is called when we decide if this is validation or not
+      // or, we could push the ids into the row of hte dataMatrix that we are storing the predictions in.
+      // let's do that!
 
-      // idAndPredictionsByRow.push([getIdSomehow, rowAverage]);
+      // again, the first value in each row is the ID for that row.
+      idAndPredictionsByRow.push([row[0], rowAverage]);
     }
   },
 
