@@ -9,7 +9,7 @@ var fastCSV = require('fast-csv');
 var csv = require('csv');
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 global.ensembleNamespace.predictionsMatrix = [];
-global.ensembleNamespace.validationMatrix = [];
+global.ensembleNamespace.dataMatrix = [];
 
 module.exports = {
 
@@ -85,17 +85,37 @@ module.exports = {
   },
 
   checkIfMatrixIsEmpty: function(matrixLength) {
-    if( global.ensembleNamespace.validationMatrix[0] === undefined) {
+    // populate the matrix with empty arrays for each row if the matrix is empty
+    if( global.ensembleNamespace.dataMatrix[0] === undefined) {
       for (var i = 0; i < matrixLength; i++) {
-        global.ensembleNamespace.validationMatrix.push([]);
+        global.ensembleNamespace.dataMatrix.push([]);
       }
     }
   },
 
   processOneFilesDataMatrix: function(data, args) {
+    // i know it's weird to see, but checkIfMatrixIsEmpty is synchronous. 
     checkIfMatrixIsEmpty(data.length);
+
     for( var i = 0; i < data.length; i++ ){
-      global.ensembleNamespace.validationMatrix[i].push(data[i]);
+      global.ensembleNamespace.dataMatrix[i].push(data[i]);
+    }
+  },
+
+  averageResults: function() {
+    var idAndPredictionsByRow = [];
+    for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++ ) {
+
+      var row = global.ensembleNamespace.dataMatrix[i];
+      var sum = 0;
+      for(var i = 0; i < row.length; i++) {
+        sum += row[i];
+      }
+      var rowAverage = sum / row.length;
+
+      // TODO: get the id for this row somehow.
+
+      idAndPredictionsByRow.push([getIdSomehow, rowAverage]);
     }
   },
 
@@ -173,10 +193,6 @@ module.exports = {
     args.generateSummaryCallback();
   },
 
-  turnSummaryIntoMatrix: function(args) {
-    for( var i = 0; i )
-  },
-
   generateSummary: function(args, callback) {
 
     args.generateSummaryCallback = callback;
@@ -242,6 +258,7 @@ module.exports = {
 
   writeToFile: function(fileNameIdentifier, args, results, callback) {
     // TODO: refactor to use the csv module.
+    console.log('results:',results);
     fastCSV.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'ppcResults.csv'), results)
     .on('finish',function() {
       callback();
