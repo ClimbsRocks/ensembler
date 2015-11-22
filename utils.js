@@ -45,11 +45,14 @@ module.exports = {
       // in other words, if we have reached this point and fileCount is 0, we have synchornously checked all files and determined none are eligible.
       console.error('we found no eligible files in',args.inputFolder);
       console.error('please make sure that: \n 1. there are .csv files in that location, and \n 2. those .csv files include in their file names the string you passed in for the first argument to ensembler, which was:', fileNameIdentifier);
+    } else {
+      module.exports.averageResults(args);
     }
   },
 
   readOneFile: function(args, fileName, readOneFileCallback) {
     var fileNameIdentifier = args.fileNameIdentifier;
+    console.log('inside readOneFile');
     // only read .csv files, and make sure we only read in files that include the fileNameIdentifier the user passed in. 
     if (fileName.slice(-4).toLowerCase() === '.csv' && fileName.indexOf(fileNameIdentifier) !== -1) {
       // grab all the characters in the file name that are not '.csv' or the fileNameIdentifier that will be shared across all these files. 
@@ -61,7 +64,9 @@ module.exports = {
       var filePath = path.join(args.inputFolder,fileName);
 
       // read in this predictions file
+      console.log('filePath\n', filePath);
       fs.readFile(filePath, function(err, data) {
+        console.log('inside readFile callback in readOneFile');
         if(err) {
           console.log('we had trouble reading in a file.');
           console.error(err);
@@ -74,6 +79,7 @@ module.exports = {
             console.log(filePath);
             console.error(err);
           } else {
+            console.log('invoking callback for readOneFile');
             readOneFileCallback(output, args, fileName);
           }
         });
@@ -108,6 +114,8 @@ module.exports = {
       }
     }
 
+
+
     // TODO: verify matrix's shape to make sure we have the same number of predictions across all classifiers.
     for( var i = 0; i < data.length; i++ ){
       // data[i] is an array holding two values: the id for that row, and the actual predicted result.
@@ -117,14 +125,15 @@ module.exports = {
       // TODO: verification. make sure this ID is the same as the id stored as the first item in the dataMatrix[i] array.
       global.ensembleNamespace.dataMatrix[i].push(prediction);
     }
+    console.log('global.ensembleNamespace.dataMatrix.length inside processOneFilesDataMatrix');
+    console.log(global.ensembleNamespace.dataMatrix.length);
     
-    module.exports.averageResults(args);
   },
 
   averageResults: function(args) {
     var idAndPredictionsByRow = [];
-    console.log('args:');
-    console.log(args);
+    console.log('global.ensembleNamespace.dataMatrix.length');
+    console.log(global.ensembleNamespace.dataMatrix.length);
     for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++ ) {
 
       var row = global.ensembleNamespace.dataMatrix[i];
@@ -132,8 +141,8 @@ module.exports = {
 
       var sum = 0;
       // the first item in each row is the ID for that row, so we will ignore that while summing.
-      for(var i = 1; i < row.length; i++) {
-        sum += row[i];
+      for(var j = 1; j < row.length; j++) {
+        sum += row[j];
       }
       var rowAverage = sum / row.length;
 
@@ -148,6 +157,11 @@ module.exports = {
       // again, the first value in each row is the ID for that row.
       idAndPredictionsByRow.push([row[0], rowAverage]);
     }
+
+    console.log('idAndPredictionsByRow:',idAndPredictionsByRow);
+
+    module.exports.writeToFile(args, idAndPredictionsByRow);
+
   },
 
   processOneFilesData: function(data, args, fileName) {
@@ -287,11 +301,14 @@ module.exports = {
     return results;
   },
 
-  writeToFile: function(fileNameIdentifier, args, results, callback) {
+  writeToFile: function(args, results, callback) {
     // TODO: refactor to use the csv module.
-    fastCSV.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'ppcResults.csv'), results)
+    fastCSV.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'machineJSResults.csv'), results)
     .on('finish',function() {
-      callback();
+      console.log('We have just written the final predictions to a file called "' + global.argv.outputFileName + 'machineJSResults.csv" that is saved at:\n', path.join(args.outputFolder, global.argv.outputFileName + 'machineJSResults.csv') );
+      console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
+      // this is designed to work with ppComplete to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
+      process.emit('killAll');
     });
   }
 };
