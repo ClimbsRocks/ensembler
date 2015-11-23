@@ -31,13 +31,13 @@ module.exports = {
 
       // as outlined above, at some point in the future, bestClassifierList will be a calculated value. 
       // for now, just use all the classifiers whose data we have read in. 
-      var bestClassifierList = global.ensembleNamespace.summarizedAlgorithmNames;
+      // var bestClassifierList = global.ensembleNamespace.summarizedAlgorithmNames;
 
       // calculateAggregatedPredictions uses the best combination of classifiers and ensembling method to create our final prediction. 
       // until we are ready for our version 3.0 release, we will simply pass it all of our classifiers, with the ensemble method of bagging them together. 
-      var results = utils.calculateAggregatedPredictions(bestClassifierList, 'average');
+      // var results = utils.calculateAggregatedPredictions(bestClassifierList, 'average');
       
-      utils.writeToFile(fileNameIdentifier, args, results);
+      // utils.writeToFile(fileNameIdentifier, args, results);
     });
   },
 
