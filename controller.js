@@ -37,12 +37,7 @@ module.exports = {
       // until we are ready for our version 3.0 release, we will simply pass it all of our classifiers, with the ensemble method of bagging them together. 
       var results = utils.calculateAggregatedPredictions(bestClassifierList, 'average');
       
-      utils.writeToFile(fileNameIdentifier, args, results, function() {
-        console.log('We have just written the final predictions to a file called "' + fileNameIdentifier + 'PredictedResults.csv" that is saved at:\n',args.outputFolder + '/' + fileNameIdentifier + 'PredictedResults.csv');
-        console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
-        // this is designed to work with ppComplete to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
-        process.emit('killAll');
-      });
+      utils.writeToFile(fileNameIdentifier, args, results);
     });
   },
 
