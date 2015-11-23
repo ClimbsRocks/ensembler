@@ -178,10 +178,28 @@ module.exports = {
 
     global.ensembleNamespace.finishedFiles++;
     if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
-      // TODO: figure out which callback is supposed to be invoked here.
-      module.exports.averageResults(args);
+
+      if( args.validationRound ) {
+        module.exports.validationFeatureEngineering(args);
+      } else {
+        module.exports.averageResults(args);        
+      }
+
     }
     
+  },
+
+  validationFeatureEngineering: function(args) {
+    // TODO: 
+      // add in meta information about each row of predictions:
+        // max
+        // min
+        // average
+        // mode (only works for categorical predictions)
+        // median
+        // variance amongst predictions
+        // we had plenty of other ideas too. add those in here (or, possibly, even in data-formatter)
+    module.exports.writeToFile( args, global.ensembleNamespace.dataMatrix );
   },
 
   averageResults: function(args) {
