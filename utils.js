@@ -200,14 +200,6 @@ module.exports = {
       }
       var rowAverage = sum / row.length;
 
-      // TODO: get the id for this row somehow.
-      // the IDs are held in a csv file in the validation folder called:
-      // 'validationIDsAndY.csv'
-      // but it's called something different in our predictions folder
-      // we'll want to lay out what our IDs file is called when we decide if this is validation or not
-      // or, we could push the ids into the row of hte dataMatrix that we are storing the predictions in.
-      // let's do that!
-
       // again, the first value in each row is the ID for that row.
       idAndPredictionsByRow.push([row[0], rowAverage]);
     }
