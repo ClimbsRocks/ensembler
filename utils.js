@@ -318,10 +318,32 @@ module.exports = {
     // fastCSV.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'machineJSResults.csv'), results)
     fastCSV.writeToPath(path.join(args.outputFolder, args.fileNameIdentifier + 'machineJSResults.csv'), results)
     .on('finish',function() {
-      console.log('We have just written the final predictions to a file called "' + args.fileNameIdentifier + 'machineJSResults.csv" that is saved at:\n', path.join(args.outputFolder, args.fileNameIdentifier + 'machineJSResults.csv') );
-      console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
-      // this is designed to work with ppComplete to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
-      process.emit('killAll');
+
+      if(args.validationRound) {
+
+        // TODO:
+          // start python shell
+            // append the data we have just written to the end (hstack) of the validation data
+          // start machineJS
+            // pass in info that this is the validationRound for machineJS
+            // pass it the validation+predictions data set
+            // make sure it still has good prettyNames
+
+        // we will be running through ensembler twice:
+          // once to 
+            // assemble all the predictions from each individual algo together, 
+            // add them onto each row of the validation set, 
+            // and then restart machineJS on that validation + predictions data set
+          // secondly to
+            // blend together all the predictions we make from that second round of machineJS. 
+
+      } else {
+        console.log('We have just written the final predictions to a file called "' + args.fileNameIdentifier + 'machineJSResults.csv" that is saved at:\n', path.join(args.outputFolder, args.fileNameIdentifier + 'machineJSResults.csv') );
+        console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
+        // this is designed to work with ppComplete to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
+        process.emit('killAll');
+        
+      }
     });
   }
 };
