@@ -14,6 +14,8 @@ module.exports = {
       args.validationRound = false;
     } else {
       // this is the case that validationRound is true
+      // save the original input folder, so we can access it later to pass back to machineJS
+      args.rawInputFolder = args.inputFolder;
       args.inputFolder = path.join(args.inputFolder, 'validation');
     }
 
