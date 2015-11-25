@@ -4,10 +4,11 @@ import sys
 import numpy as np
 from scipy.sparse import csr_matrix, hstack
 
+fileNames = sys.argv[2]
 # TODO: pass in these three arguments
-predictionsFile = sys.argv[2]
-validationData = sys.argv[3]
-outputFile = sys.argv[4]
+predictionsFile = fileNames['predictionsFile']
+validationData = fileNames['validationData']
+outputFile = fileNames['outputFile']
 
 # continued callout to the person originally responsible for these functions:
 # http://stackoverflow.com/questions/8955448/save-load-scipy-sparse-csr-matrix-in-portable-data-format
