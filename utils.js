@@ -70,12 +70,17 @@ module.exports = {
 
         // turn the blob of text into rows
         csv.parse(data, function(err, output) {
+          // try to have the garbage collector kick in a little bit more quickly by explicitly removing the reference to data from fs.readFile
+          data = null;
+
           if(err) {
             console.log('we had trouble interpreting this file\'s data as csv data');
             console.log(filePath);
             console.error(err);
           } else {
             readOneFileCallback(output, args, fileName);
+            // similarly, explicitly remove reference to the output variable to help garbage collection start more quickly.
+            output = null;
           }
         });
       });
@@ -175,6 +180,9 @@ module.exports = {
       // TODO: verification. make sure this ID is the same as the id stored as the first item in the dataMatrix[i] array.
       global.ensembleNamespace.dataMatrix[i].push(prediction);
     }
+
+    // remove reference to data to help garbage collection start more rapidly.
+    data = null;
 
     global.ensembleNamespace.finishedFiles++;
     if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
@@ -332,6 +340,7 @@ module.exports = {
     } else {
       var writeFileName = path.join(args.outputFolder, args.fileNameIdentifier + 'machineJSResults.csv');
     }
+
     fastCSV.writeToPath(writeFileName, results)
     .on('finish',function() {
 
@@ -357,7 +366,7 @@ module.exports = {
             // blend together all the predictions we make from that second round of machineJS. 
 
       } else {
-        console.log('We have just written the final predictions to a file called "' + args.fileNameIdentifier + 'machineJSResults.csv" that is saved at:\n', path.join(args.outputFolder, args.fileNameIdentifier + 'machineJSResults.csv') );
+        console.log('We have just written the final predictions to a file that is saved at:\n' + writeFileName );
         console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
         // this is designed to work with ppComplete to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
         process.emit('killAll');
