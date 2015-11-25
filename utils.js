@@ -260,6 +260,13 @@ module.exports = {
 
       if(args.validationRound) {
 
+        // TODO: give the outputFile a prettier name, one that matches with the prettyName from machineJS
+        // TODO: make sure this is the right folder we want to be writing validationAndPredictions to
+        var fileNamesObj = {
+          predictionsFile: writeFileName,
+          validationData: path.join(args.inputFolder, 'validationData.npz'),
+          outputFile: path.join(args.inputFolder, 'validationAndPredictions.npz')
+        };
 
         // TODO:
           // start python shell
