@@ -3,10 +3,11 @@ var fse = require('fs-extra');
 var path = require('path');
 var byline = require('byline');
 // TODO: rename summary to predictionsSummary
+var Baby = require('babyparse');
 var summary = {};
 var ensembleMethods = require('./ensembleMethods.js');
 var fastCSV = require('fast-csv');
-var csv = require('csv');
+// var csv = require('csv');
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 global.ensembleNamespace.predictionsMatrix = [];
 global.ensembleNamespace.dataMatrix = [];
@@ -36,15 +37,16 @@ module.exports = {
 
     // TODO: do this on a setInterval, so that if we are eventually reading in 1000 files, we can do that at a steady pace, rather than all at once. 
     console.log('We are reading in all the relevant predictions files. This might take a little while if you\'ve made many predictions.')
-    var fileIndex = 0;
-    setInterval(function() {
-      var fileName = files[fileIndex++]
-      module.exports.readOneFile(args, fileName, files, module.exports.processOneFilesDataMatrix);
-    }, 500);
+    // var fileIndex = 0;
+    // setInterval(function() {
+    //   var fileName = files[fileIndex++]
+    //   module.exports.readOneFile(args, fileName, files, module.exports.processOneFilesDataMatrix);
+    // }, 500);
     // files.forEach(function(fileName) {
     //   module.exports.readOneFile(args, fileName, module.exports.processOneFilesDataMatrix);
     // });
 
+    module.exports.readOneFile(args, files[0], files, module.exports.processOneFilesDataMatrix);
   
 
     // handles off by one errors
@@ -59,8 +61,11 @@ module.exports = {
   },
 
   readOneFile: function(args, fileName, files, readOneFileCallback) {
+    console.time('readOneFile');
     // recursion! i'm just bundling the base case and the next iteration into a single function, as there are several places we might invoke these
     var readNextFile = function() {
+      console.log('fileName:', fileName);
+      console.timeEnd('readOneFile');
       if( files.length ) {
         module.exports.readOneFile(args, files.shift(), files, readOneFileCallback);
       }
@@ -78,15 +83,23 @@ module.exports = {
       var filePath = path.join(args.inputFolder,fileName);
 
       // read in this predictions file
+      console.time('readFile');
       fs.readFile(filePath, function(err, data) {
+        data = data.toString();
+        console.timeEnd('readFile');
         if(err) {
           console.log('we had trouble reading in a file.');
           console.error(err);
           readNextFile();
         }
 
+        console.time('csv.parse');
+        var output = Baby.parse(data);
         // turn the blob of text into rows
-        csv.parse(data, function(err, output) {
+        // var csv = require('csv');
+        // csv.parse(data, function(err, output) {
+          console.timeEnd('csv.parse');
+          console.log('output.length inside csv.parse', output.length);
           // try to have the garbage collector kick in a little bit more quickly by explicitly removing the reference to data from fs.readFile
           data = null;
 
@@ -100,7 +113,7 @@ module.exports = {
             output = null;
           }
           readNextFile();
-        });
+        // });
       });
     } else {
       // if the file is not a .csv file, we will ignore it, and remove it from our count of files to parse
@@ -123,6 +136,7 @@ module.exports = {
   },
 
   processOneFilesDataMatrix: function(data, args, fileName) {
+    console.log('data.length inside processOneFilesDataMatrix:',data.length);
     // i know it's weird to see, but checkIfMatrixIsEmpty is synchronous. 
     var matrixIsEmpty = module.exports.checkIfMatrixIsEmpty(data.length);
     
