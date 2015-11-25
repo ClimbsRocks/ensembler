@@ -326,12 +326,21 @@ module.exports = {
   writeToFile: function(args, results) {
     // TODO: refactor to use the csv module.
     // fastCSV.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'machineJSResults.csv'), results)
-    fastCSV.writeToPath(path.join(args.outputFolder, args.fileNameIdentifier + 'machineJSResults.csv'), results)
+
+    if( args.validationRound) {
+      var writeFileName = path.join( args.inputFolder, 'idAndPredictions.csv');
+    } else {
+      var writeFileName = path.join(args.outputFolder, args.fileNameIdentifier + 'machineJSResults.csv');
+    }
+    fastCSV.writeToPath(writeFileName, results)
     .on('finish',function() {
 
       if(args.validationRound) {
 
+
         // TODO:
+          // make sure we are writing the idAndPredictions file to disk. 
+            // as a csv
           // start python shell
             // append the data we have just written to the end (hstack) of the validation data
           // start machineJS
