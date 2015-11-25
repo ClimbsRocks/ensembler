@@ -95,7 +95,8 @@ module.exports = {
     var returnVal = false;
     if( global.ensembleNamespace.dataMatrix[0] === undefined) {
       returnVal = true;
-      for (var i = 0; i < matrixLength; i++) {
+      // our matrix has two non-predictions rows (scores row, and headerRow) that we want to ignore
+      for (var i = 0; i < matrixLength - 2; i++) {
         global.ensembleNamespace.dataMatrix.push([]);
       }
     }
@@ -156,9 +157,10 @@ module.exports = {
       global.ensembleNamespace.headerRow = data[1];
 
       // push the row IDs in as the first item in each row
-      for(var i = 0; i < data.length; i++) {
+      // again, ignore the first two rows
+      for(var i = 2; i < data.length; i++) {
         var id = data[i][0];
-        global.ensembleNamespace.dataMatrix[i].push(id);
+        global.ensembleNamespace.dataMatrix[i - 2].push(id);
       }
     }
 
@@ -178,7 +180,10 @@ module.exports = {
       var prediction = data[i][1];
 
       // TODO: verification. make sure this ID is the same as the id stored as the first item in the dataMatrix[i] array.
-      global.ensembleNamespace.dataMatrix[i].push(prediction);
+      // our predictions files have two non-predictions lines (scores, and headerRow)
+      // our actual validation data file (saved as a scipy.sparse matrix in python), does not
+      // therefore, we need to bump up each item by two, to match up to the format of the data we already have in python
+      global.ensembleNamespace.dataMatrix[i - 2].push(prediction);
     }
 
     // remove reference to data to help garbage collection start more rapidly.
@@ -207,6 +212,16 @@ module.exports = {
         // median
         // variance amongst predictions
         // we had plenty of other ideas too. add those in here (or, possibly, even in data-formatter)
+    module.exports.removeIdsFromValidation(args);
+  },
+
+  removeIdsFromValidation: function(args) {
+
+    // the first item in each row is the id. we want to remove that. 
+    for(var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
+      global.ensembleNamespace.dataMatrix[i].shift();
+    }
+
     module.exports.writeToFile( args, global.ensembleNamespace.dataMatrix );
   },
 
