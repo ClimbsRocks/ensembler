@@ -35,6 +35,7 @@
   },
   "homepage": "https://github.com/ClimbsRocks/ensembler#readme",
   "dependencies": {
+    "babyparse": "^0.4.3",
     "byline": "^4.2.1",
     "csv": "^0.4.6",
     "fast-csv": "^0.6.0",
