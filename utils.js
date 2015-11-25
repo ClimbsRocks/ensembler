@@ -23,6 +23,7 @@ module.exports = {
 
         console.error('We need the predicted output from the classifiers in that folder in order to ensemble the results together. Please run this library again, or copy/paste the results into the input folder, to create an ensemble.');
       } else {
+        console.log('We found ' + files.length + 'files in the directory where you\'re storing the predictions');
         findFilesCallback(args, files);
       }
     });
@@ -32,11 +33,19 @@ module.exports = {
     global.ensembleNamespace.fileCount = files.length;
     global.ensembleNamespace.finishedFiles = 0;
 
+
     // TODO: do this on a setInterval, so that if we are eventually reading in 1000 files, we can do that at a steady pace, rather than all at once. 
     console.log('We are reading in all the relevant predictions files. This might take a little while if you\'ve made many predictions.')
-    files.forEach(function(fileName) {
-      module.exports.readOneFile(args, fileName, module.exports.processOneFilesDataMatrix);
-    });
+    var fileIndex = 0;
+    setInterval(function() {
+      var fileName = files[fileIndex++]
+      module.exports.readOneFile(args, fileName, files, module.exports.processOneFilesDataMatrix);
+    }, 500);
+    // files.forEach(function(fileName) {
+    //   module.exports.readOneFile(args, fileName, module.exports.processOneFilesDataMatrix);
+    // });
+
+  
 
     // handles off by one errors
     if(global.ensembleNamespace.fileCount === 0) {
@@ -49,7 +58,14 @@ module.exports = {
     }
   },
 
-  readOneFile: function(args, fileName, readOneFileCallback) {
+  readOneFile: function(args, fileName, files, readOneFileCallback) {
+    // recursion! i'm just bundling the base case and the next iteration into a single function, as there are several places we might invoke these
+    var readNextFile = function() {
+      if( files.length ) {
+        module.exports.readOneFile(args, files.shift(), files, readOneFileCallback);
+      }
+    };
+
     var fileNameIdentifier = args.fileNameIdentifier;
     // only read .csv files, and make sure we only read in files that include the fileNameIdentifier the user passed in. 
     if (fileName.slice(-4).toLowerCase() === '.csv' && fileName.indexOf(fileNameIdentifier) !== -1) {
@@ -66,6 +82,7 @@ module.exports = {
         if(err) {
           console.log('we had trouble reading in a file.');
           console.error(err);
+          readNextFile();
         }
 
         // turn the blob of text into rows
@@ -82,11 +99,13 @@ module.exports = {
             // similarly, explicitly remove reference to the output variable to help garbage collection start more quickly.
             output = null;
           }
+          readNextFile();
         });
       });
     } else {
       // if the file is not a .csv file, we will ignore it, and remove it from our count of files to parse
       global.ensembleNamespace.fileCount--;
+      readNextFile();
     }
   },
 
@@ -130,6 +149,7 @@ module.exports = {
 
     // TODO: verify matrix's shape to make sure we have the same number of predictions across all classifiers.
     for( var i = 2; i < data.length; i++ ){
+      var hasErrors = false;
       // data[i] is an array holding two values: the id for that row, and the actual predicted result.
       var id = data[i][0];
       var prediction = data[i][1];
@@ -138,13 +158,24 @@ module.exports = {
       // our predictions files have two non-predictions lines (scores, and headerRow)
       // our actual validation data file (saved as a scipy.sparse matrix in python), does not
       // therefore, we need to bump up each item by two, to match up to the format of the data we already have in python
-      global.ensembleNamespace.dataMatrix[i - 2].push(prediction);
+      try {
+        global.ensembleNamespace.dataMatrix[i - 2].push(prediction);
+
+      } catch(err) {
+        hasErrors = true;
+        console.log(i);
+        console.error(err);
+      }
     }
 
+    if(!hasErrors) {
+      console.log('we read one in successfully');
+    }
     // remove reference to data to help garbage collection start more rapidly.
     data = null;
 
     global.ensembleNamespace.finishedFiles++;
+    console.log('finishedFiles:',global.ensembleNamespace.finishedFiles);
     if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
 
       if( args.validationRound ) {
