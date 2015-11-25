@@ -7,7 +7,6 @@ var Baby = require('babyparse');
 var summary = {};
 var ensembleMethods = require('./ensembleMethods.js');
 var fastCSV = require('fast-csv');
-// var csv = require('csv');
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 global.ensembleNamespace.predictionsMatrix = [];
 global.ensembleNamespace.dataMatrix = [];
@@ -31,20 +30,10 @@ module.exports = {
   },
 
   readFiles: function(args, files) {
-    global.ensembleNamespace.fileCount = files.length;
+    global.ensembleNamespace.fileCount = files.length - 1;
     global.ensembleNamespace.finishedFiles = 0;
 
-
-    // TODO: do this on a setInterval, so that if we are eventually reading in 1000 files, we can do that at a steady pace, rather than all at once. 
     console.log('We are reading in all the relevant predictions files. This might take a little while if you\'ve made many predictions.')
-    // var fileIndex = 0;
-    // setInterval(function() {
-    //   var fileName = files[fileIndex++]
-    //   module.exports.readOneFile(args, fileName, files, module.exports.processOneFilesDataMatrix);
-    // }, 500);
-    // files.forEach(function(fileName) {
-    //   module.exports.readOneFile(args, fileName, module.exports.processOneFilesDataMatrix);
-    // });
 
     module.exports.readOneFile(args, files[0], files, module.exports.processOneFilesDataMatrix);
   
@@ -61,11 +50,8 @@ module.exports = {
   },
 
   readOneFile: function(args, fileName, files, readOneFileCallback) {
-    console.time('readOneFile');
     // recursion! i'm just bundling the base case and the next iteration into a single function, as there are several places we might invoke these
     var readNextFile = function() {
-      console.log('fileName:', fileName);
-      console.timeEnd('readOneFile');
       if( files.length ) {
         module.exports.readOneFile(args, files.shift(), files, readOneFileCallback);
       }
@@ -83,37 +69,28 @@ module.exports = {
       var filePath = path.join(args.inputFolder,fileName);
 
       // read in this predictions file
-      console.time('readFile');
       fs.readFile(filePath, function(err, data) {
         data = data.toString();
-        console.timeEnd('readFile');
         if(err) {
           console.log('we had trouble reading in a file.');
           console.error(err);
-          readNextFile();
         }
 
-        console.time('csv.parse');
-        var output = Baby.parse(data);
-        // turn the blob of text into rows
-        // var csv = require('csv');
-        // csv.parse(data, function(err, output) {
-          console.timeEnd('csv.parse');
-          console.log('output.length inside csv.parse', output.length);
-          // try to have the garbage collector kick in a little bit more quickly by explicitly removing the reference to data from fs.readFile
-          data = null;
+        var output = Baby.parse(data).data;
+        // try to have the garbage collector kick in a little bit more quickly by explicitly removing the reference to data from fs.readFile
+        data = null;
 
-          if(err) {
-            console.log('we had trouble interpreting this file\'s data as csv data');
-            console.log(filePath);
-            console.error(err);
-          } else {
-            readOneFileCallback(output, args, fileName);
-            // similarly, explicitly remove reference to the output variable to help garbage collection start more quickly.
-            output = null;
-          }
-          readNextFile();
-        // });
+        if(err) {
+          console.log('we had trouble interpreting this file\'s data as csv data');
+          console.log(filePath);
+          console.error(err);
+        } else {
+          readOneFileCallback(output, args, fileName);
+          // similarly, explicitly remove reference to the output variable to help garbage collection start more quickly.
+          output = null;
+        }
+
+        readNextFile();
       });
     } else {
       // if the file is not a .csv file, we will ignore it, and remove it from our count of files to parse
@@ -136,7 +113,6 @@ module.exports = {
   },
 
   processOneFilesDataMatrix: function(data, args, fileName) {
-    console.log('data.length inside processOneFilesDataMatrix:',data.length);
     // i know it's weird to see, but checkIfMatrixIsEmpty is synchronous. 
     var matrixIsEmpty = module.exports.checkIfMatrixIsEmpty(data.length);
     
@@ -182,14 +158,10 @@ module.exports = {
       }
     }
 
-    if(!hasErrors) {
-      console.log('we read one in successfully');
-    }
     // remove reference to data to help garbage collection start more rapidly.
     data = null;
 
     global.ensembleNamespace.finishedFiles++;
-    console.log('finishedFiles:',global.ensembleNamespace.finishedFiles);
     if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
 
       if( args.validationRound ) {
@@ -227,8 +199,6 @@ module.exports = {
 
   averageResults: function(args) {
     var idAndPredictionsByRow = [];
-    console.log('global.ensembleNamespace.dataMatrix.length');
-    console.log(global.ensembleNamespace.dataMatrix.length);
     for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++ ) {
 
       var row = global.ensembleNamespace.dataMatrix[i];
@@ -245,7 +215,6 @@ module.exports = {
       idAndPredictionsByRow.push([row[0], rowAverage]);
     }
 
-    console.log('idAndPredictionsByRow:',idAndPredictionsByRow);
     global.ensembleNamespace.idAndPredictionsByRow = idAndPredictionsByRow;
 
     module.exports.copyBestScores(args);
@@ -304,6 +273,7 @@ module.exports = {
     .on('finish',function() {
 
       if(args.validationRound) {
+        console.log('We have just written the accumulated predictions from the stage 0 classifiers to a file that is saved at:\n' + writeFileName );
 
         // TODO: give the outputFile a prettier name, one that matches with the prettyName from machineJS
         // TODO: make sure this is the right folder we want to be writing validationAndPredictions to
