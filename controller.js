@@ -2,17 +2,19 @@ global.ensembleNamespace = {};
 var fs = require('fs');
 var path = require('path');
 var utils = require('./utils.js');
+var shutDown = require('./shutDown.js');
 
 
 module.exports = {
   createEnsemble: function(args) {
+    shutDown();
     // we're actually going to be running through ensembler twice: 
       // once for the validation data set
       // once for the actual predictions data set
     // if the user doesn't pass in a value, we'll assume they just want predictions
     if( args.validationRound === undefined ) {
       args.validationRound = false;
-    } else {
+    } else if(args.validationRound) {
       // this is the case that validationRound is true
       // save the original input folder, so we can access it later to pass back to machineJS
       args.rawInputFolder = args.inputFolder;
