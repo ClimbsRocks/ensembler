@@ -103,51 +103,6 @@ module.exports = {
     return returnVal
   },
 
-  // processOneFilesData: function(data, args, fileName) {
-  //   console.log('we are inside processOneFilesData');
-  //   var fileNameIdentifier = args.fileNameIdentifier;
-  //   var prettyFileName = fileName.slice(0,-4);
-  //   prettyFileName = prettyFileName.split(fileNameIdentifier).join('');
-
-  //   var fileNameIdentifier = args.fileNameIdentifier;
-    
-  //   // the first row holds the validationScore and trainingScore for this algorithm
-  //   var scoresObj = {
-  //     scores: data[0],
-  //     fileName: fileName
-  //   };
-  //   global.ensembleNamespace.scores.push(scoresObj);
-  //   // the second row holds the headerRow
-  //   global.ensembleNamespace.headerRow = data[1];
-
-  //   for(var i = 2; i < data.length; i++) {
-  //     var row = data[i];
-  //     // the id is stored in the first column
-  //     var id = row[0];
-  //     if(summary[id] === undefined) {
-  //       summary[id] = {};
-  //     }
-  //     // the predicted values might have gotten saved as strings when we want them to be numbers. if so, convert them to numbers here.
-  //     if(parseFloat(row[1]) !== NaN) {
-  //       row[1] = parseFloat(row[1]);
-  //     }
-
-  //     // the fileName must, of course, be a unique identifier for this particular file. As such, it is quite useful as a unique identifier for the predictions contained in this file. 
-  //     // right now we are simply reading in all the results from the different files and loading them into one large in-memory object. 
-  //     // we are not yet performing any calculations or logic on the data. 
-  //     //the prediction is stored in the second column
-
-  //     // summary object, for this rowID, for this algorithm (prettyFileName), is equal to the current prediction
-  //     summary[id][prettyFileName] = row[1];
-  //   }
-
-  //   global.ensembleNamespace.finishedFiles++;
-  //   if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
-  //     // TODO: figure out which callback is supposed to be invoked here.
-  //     module.exports.copyBestScores(args);
-  //   }
-  // },
-
   processOneFilesDataMatrix: function(data, args, fileName) {
     // i know it's weird to see, but checkIfMatrixIsEmpty is synchronous. 
     var matrixIsEmpty = module.exports.checkIfMatrixIsEmpty(data.length);
@@ -291,64 +246,8 @@ module.exports = {
 
   },
 
-  // // this method assumes we have already gone through to perform the logic of selecting both the best set of classifiers, as well as the best ensemble method for that particular set of classifiers. 
-  // // right now, it defaults to all classifiers that met the criteria for generate summary (.csv file located in args.inputFolder that had fileNameIdentifier somewhere in their file name), and assumes that averaging is the bestMethod. 
-  // calculateAggregatedPredictions: function(classifierNames, bestMethod) {
-  //   var predictionCalculation = ensembleMethods[bestMethod];
-  //   var results = [];
-  //   var eligiblePredictions = [];
-
-  //   // keep track of missing values to give the user an informative error message if they do not have predictions for some IDs that they do have for others. 
-  //   var missingPredictions = {};
-  //   classifierNames.forEach(function(clName) {
-  //     missingPredictions[clName] = 0;
-  //   });
-
-  //   results.push(global.ensembleNamespace.headerRow);
-  //   // iterate through all the rows in our summary object, and pick out only the values from the eligible classifiers.
-  //   for (var rowNum in summary) {
-  //     // console.log('row:',row);
-  //     // pick out only the predictions from the algos that were selected by createEnsemble:
-  //     // reset eligiblePredictions to be an empty array for each row. 
-  //     eligiblePredictions = [];
-
-  //     // pick out only the values from the eligible classifiers
-  //     classifierNames.forEach(function(clName) {
-  //       var predictedNum = summary[rowNum][clName];
-  //       if (predictedNum === undefined) {
-  //         missingPredictions[clName]++;
-  //       } else {
-  //         eligiblePredictions.push(predictedNum);
-  //       }
-  //     });
-
-  //     // ensembleMethods holds all the ways we have of ensembling together the results from different predictions. 
-  //     // each method takes in an array, and returns a single number
-  //     var output = predictionCalculation(eligiblePredictions);
-  //     if( global.argv.binaryOutput === 'true' ) {
-  //       output = Math.round(output);
-  //     }
-  //     results.push([parseInt(rowNum, 10), output]);
-  //   }
-
-  //   var missingCount = 0;
-  //   for (var key in missingPredictions) {
-  //     missingCount += missingPredictions[key];
-  //   }
-
-  //   if (missingCount > 0) {
-  //     console.error('there were inconsistent IDs of predictions across classifiers');
-  //     console.error('these files were missing the following counts of IDs that other classifiers had predictions for :');
-  //     console.error(missingPredictions);
-  //   } else {
-  //     console.log('great, every file had predictions for the exact same set of IDs!');
-  //   }
-  //   return results;
-  // },
-
   writeToFile: function(args, results) {
     // TODO: refactor to use the csv module.
-    // fastCSV.writeToPath(path.join(args.outputFolder, global.argv.outputFileName + 'machineJSResults.csv'), results)
 
     if( args.validationRound) {
       var writeFileName = path.join( args.inputFolder, 'idAndPredictions.csv');
@@ -363,8 +262,6 @@ module.exports = {
 
 
         // TODO:
-          // make sure we are writing the idAndPredictions file to disk. 
-            // as a csv
           // start python shell
             // append the data we have just written to the end (hstack) of the validation data
           // start machineJS
