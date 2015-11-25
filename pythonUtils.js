@@ -34,7 +34,7 @@ module.exports = function( argsObject, callback ) {
 
   var pyOptions = makePyOptions( JSON.stringify( argsObject ) );
 
-  var pyController = PythonShell.run('./addStage1Predictions.py', pyOptions, function(err) {
+  var pyController = PythonShell.run('./appendPredictionsToValidationData.py', pyOptions, function(err) {
     if(err) {
       // exit code null means we killed the python child process intentionally
       if(err.exitCode !== null) {
