@@ -39,7 +39,7 @@ module.exports = function( argsObject, callback ) {
       // exit code null means we killed the python child process intentionally
       if(err.exitCode !== null) {
         console.log('heard an error!');
-        console.error(JSON.parse(err));
+        console.error(err);
       }
     } 
 
