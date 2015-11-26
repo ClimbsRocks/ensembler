@@ -289,7 +289,9 @@ module.exports = {
 
         var pyChild = pythonUtils(fileNamesObj, function() {
           // TODO: restart machineJS
-          // TODO: listen for new file names
+            // pass in most of the same arguments we already have
+            // pass in validationRound true
+            // make sure to pass in the right prettyNames and all that.
           console.log('finished adding stage 0 predictions to the validation set!');
         });
 
