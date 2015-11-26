@@ -8,6 +8,8 @@ var summary = {};
 var ensembleMethods = require('./ensembleMethods.js');
 var fastCSV = require('fast-csv');
 var pythonUtils = require('./pythonUtils.js');
+// TODO: change this back to the npm-installed version
+var machineJS = require('machinejs');
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 global.ensembleNamespace.predictionsMatrix = [];
 global.ensembleNamespace.dataMatrix = [];
@@ -24,14 +26,14 @@ module.exports = {
 
         console.error('We need the predicted output from the classifiers in that folder in order to ensemble the results together. Please run this library again, or copy/paste the results into the input folder, to create an ensemble.');
       } else {
-        console.log('We found ' + files.length + 'files in the directory where you\'re storing the predictions');
+        console.log('We found ' + files.length + ' files in the directory where you\'re storing the predictions');
         findFilesCallback(args, files);
       }
     });
   },
 
   readFiles: function(args, files) {
-    global.ensembleNamespace.fileCount = files.length - 1;
+    global.ensembleNamespace.fileCount = files.length;
     global.ensembleNamespace.finishedFiles = 0;
 
     console.log('We are reading in all the relevant predictions files. This might take a little while if you\'ve made many predictions.')
@@ -97,8 +99,22 @@ module.exports = {
       });
     } else {
       // if the file is not a .csv file, we will ignore it, and remove it from our count of files to parse
+      console.log('found an ineligible file');
       global.ensembleNamespace.fileCount--;
-      readNextFile();
+      console.log('finishedFiles:', global.ensembleNamespace.finishedFiles);
+      console.log('fileCount:',global.ensembleNamespace.fileCount);
+      if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
+
+        if( args.validationRound ) {
+          module.exports.validationFeatureEngineering(args);
+        } else {
+          module.exports.averageResults(args);        
+        }
+
+      } else {
+
+        readNextFile();
+      }
     }
   },
 
@@ -165,6 +181,8 @@ module.exports = {
     data = null;
 
     global.ensembleNamespace.finishedFiles++;
+    console.log('finishedFiles:', global.ensembleNamespace.finishedFiles);
+    console.log('fileCount:',global.ensembleNamespace.fileCount);
     if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
 
       if( args.validationRound ) {
@@ -264,6 +282,7 @@ module.exports = {
   },
 
   writeToFile: function(args, results) {
+    console.log('inside writeToFile');
     // TODO: refactor to use the csv module.
 
     if( args.validationRound) {
@@ -280,15 +299,21 @@ module.exports = {
 
         // TODO: give the outputFile a prettier name, one that matches with the prettyName from machineJS
         // TODO: make sure this is the right folder we want to be writing validationAndPredictions to
+        var aggregatedValidationFile = path.join(args.inputFolder, 'validationAndPredictions.npz')
         var fileNamesObj = {
           predictionsFile: writeFileName,
           validationData: path.join(args.inputFolder, 'validationData.npz'),
-          outputFile: path.join(args.inputFolder, 'validationAndPredictions.npz')
+          outputFile: aggregatedValidationFile
         };
 
 
         var pyChild = pythonUtils(fileNamesObj, function() {
           // TODO: restart machineJS
+          global.argv.validationRound = true;
+          global.argv.dataFile = aggregatedValidationFile;
+          global.argv.devEnsemble = false;
+          global.argv.alreadyFormatted = true;
+          machineJS(global.argv)
             // pass in most of the same arguments we already have
             // pass in validationRound true
             // make sure to pass in the right prettyNames and all that.
