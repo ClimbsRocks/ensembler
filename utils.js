@@ -7,6 +7,7 @@ var Baby = require('babyparse');
 var summary = {};
 var ensembleMethods = require('./ensembleMethods.js');
 var fastCSV = require('fast-csv');
+var pythonUtils = require('./pythonUtils.js');
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 global.ensembleNamespace.predictionsMatrix = [];
 global.ensembleNamespace.dataMatrix = [];
@@ -77,6 +78,8 @@ module.exports = {
         }
 
         var output = Baby.parse(data).data;
+        // the Baby parser adds on an extra blank line at the end of the file, so we want to remove that. 
+        output.pop();
         // try to have the garbage collector kick in a little bit more quickly by explicitly removing the reference to data from fs.readFile
         data = null;
 
@@ -282,6 +285,14 @@ module.exports = {
           validationData: path.join(args.inputFolder, 'validationData.npz'),
           outputFile: path.join(args.inputFolder, 'validationAndPredictions.npz')
         };
+
+
+        var pyChild = pythonUtils(fileNamesObj, function() {
+          // TODO: restart machineJS
+          // TODO: listen for new file names
+          console.log('finished adding stage 0 predictions to the validation set!');
+        });
+
 
         // TODO:
           // start python shell
