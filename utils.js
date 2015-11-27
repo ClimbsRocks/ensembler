@@ -9,7 +9,16 @@ var ensembleMethods = require('./ensembleMethods.js');
 var fastCSV = require('fast-csv');
 var pythonUtils = require('./pythonUtils.js');
 // TODO: change this back to the npm-installed version
-var machineJS = require('machinejs');
+try {
+  // ideally, we want ensembler to be run with machineJS
+  // attempt to load in the parent machineJS, which has ensembler installed as an npm dependency
+  var machineJS = require('../../ppLib.js');
+} catch(err) {
+  // otherwise, load in machineJS from it's npm dependencies
+  // NOTE: right now, this will only work when invoked from machineJS
+  // and it will probably be a bit of a pain to make it work without being invoked from machineJS
+  var machineJS = require('machinejs');
+}
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 global.ensembleNamespace.predictionsMatrix = [];
 global.ensembleNamespace.dataMatrix = [];
