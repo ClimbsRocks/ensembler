@@ -329,7 +329,7 @@ module.exports = {
           // make sure to pass in the right prettyNames and all that.
           global.argv.validationRound = true;
           global.argv.dataFile = aggregatedValidationFile;
-          console.log('global.argv.dataFile in utils.js in ensembler:',global.argv.dataFile);
+          global.argv.validationYs = path.join(args.inputFolder, 'validationIDsAndY.csv');
           global.argv.devEnsemble = false;
           global.argv.alreadyFormatted = true;
           machineJS(global.argv)
