@@ -301,12 +301,10 @@ module.exports = {
           // ideally, we want ensembler to be run with machineJS
           // attempt to load in the parent machineJS, which has ensembler installed as an npm dependency
           var machineJSPath = path.join(global.argv.ppCompleteLocation, 'ppLib.js');
-          console.log('machineJSPath when requiring machineJS into ensembler:', machineJSPath);
           var machineJS = require(machineJSPath);
-          console.log(machineJS);
-          console.log('loaded in machineJS from it\'s parent')
         } catch(err) {
-          console.log('heard an error trying to load up machineJS from the parent directory, rather than from a node_module')
+          console.log('heard an error trying to load up machineJS from the parent directory, rather than from a node_module');
+          console.log('loading it in from the node_module instead');
           console.error(err);
           // otherwise, load in machineJS from it's npm dependencies
           // NOTE: right now, this will only work when invoked from machineJS
@@ -333,7 +331,9 @@ module.exports = {
           global.argv.validationIDs = path.join(args.inputFolder, 'validationIDs.npz');
           global.argv.devEnsemble = false;
           global.argv.alreadyFormatted = true;
-          machineJS(global.argv)
+          global.argv.dev = false;
+          // now pass the validation set back to machineJS to have it choose how to ensemble all these early predictions together!
+          machineJS(global.argv);
         });
 
         // we will be running through ensembler twice:
