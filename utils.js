@@ -8,17 +8,7 @@ var summary = {};
 var ensembleMethods = require('./ensembleMethods.js');
 var fastCSV = require('fast-csv');
 var pythonUtils = require('./pythonUtils.js');
-// TODO: change this back to the npm-installed version
-try {
-  // ideally, we want ensembler to be run with machineJS
-  // attempt to load in the parent machineJS, which has ensembler installed as an npm dependency
-  var machineJS = require('../../ppLib.js');
-} catch(err) {
-  // otherwise, load in machineJS from it's npm dependencies
-  // NOTE: right now, this will only work when invoked from machineJS
-  // and it will probably be a bit of a pain to make it work without being invoked from machineJS
-  var machineJS = require('machinejs');
-}
+
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 global.ensembleNamespace.predictionsMatrix = [];
 global.ensembleNamespace.dataMatrix = [];
@@ -305,6 +295,24 @@ module.exports = {
 
       if(args.validationRound) {
         console.log('We have just written the accumulated predictions from the stage 0 classifiers to a file that is saved at:\n' + writeFileName );
+
+        // we have to load in machineJS here to ensure that processArgs has been run
+        try {
+          // ideally, we want ensembler to be run with machineJS
+          // attempt to load in the parent machineJS, which has ensembler installed as an npm dependency
+          var machineJSPath = path.join(global.argv.ppCompleteLocation, 'ppLib.js');
+          console.log('machineJSPath when requiring machineJS into ensembler:', machineJSPath);
+          var machineJS = require(machineJSPath);
+          console.log(machineJS);
+          console.log('loaded in machineJS from it\'s parent')
+        } catch(err) {
+          console.log('heard an error trying to load up machineJS from the parent directory, rather than from a node_module')
+          console.error(err);
+          // otherwise, load in machineJS from it's npm dependencies
+          // NOTE: right now, this will only work when invoked from machineJS
+          // and it will probably be a bit of a pain to make it work without being invoked from machineJS
+          var machineJS = require('machinejs');
+        }
 
         // TODO: give the outputFile a prettier name, one that matches with the prettyName from machineJS
         // TODO: make sure this is the right folder we want to be writing validationAndPredictions to
