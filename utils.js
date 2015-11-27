@@ -306,28 +306,17 @@ module.exports = {
           outputFile: aggregatedValidationFile
         };
 
-
+        // pythonUtils(fileNamesObj) will start a python shell and append the data we have just written to the end (hstack) of the validation data
+        // once that's done, it will invoke the callback, which restarts machineJS
         var pyChild = pythonUtils(fileNamesObj, function() {
-          // TODO: restart machineJS
+          // make sure to pass in the right prettyNames and all that.
           global.argv.validationRound = true;
           global.argv.dataFile = aggregatedValidationFile;
+          console.log('global.argv.dataFile in utils.js in ensembler:',global.argv.dataFile);
           global.argv.devEnsemble = false;
           global.argv.alreadyFormatted = true;
           machineJS(global.argv)
-            // pass in most of the same arguments we already have
-            // pass in validationRound true
-            // make sure to pass in the right prettyNames and all that.
-          console.log('finished adding stage 0 predictions to the validation set!');
         });
-
-
-        // TODO:
-          // start python shell
-            // append the data we have just written to the end (hstack) of the validation data
-          // start machineJS
-            // pass in info that this is the validationRound for machineJS
-            // pass it the validation+predictions data set
-            // make sure it still has good prettyNames
 
         // we will be running through ensembler twice:
           // once to 
