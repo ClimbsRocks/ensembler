@@ -186,7 +186,7 @@ module.exports = {
     if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
 
       if( args.validationRound ) {
-        module.exports.validationFeatureEngineering(args);
+        module.exports.removeIdsFromValidation(args);        
       } else {
         module.exports.averageResults(args);        
       }
@@ -211,17 +211,30 @@ module.exports = {
       row.push( math.sum(row) );
       row.push( math.var(row) ); //this is the variance
 
+      // calculate the consensus vote, as well as what percent of classifiers had that vote. 
+      if( global.argv.fileNames.problemType === 'category') {
+        var roundedRow = [];
+        var voteCount = {
+          0 : 0,
+          1 : 0
+        };
+        for(var j = 0; j < row.length; j++) {
+          if( row[j] < 0.5 ) {
+            roundedRow.push(0);
+            voteCount['0']++
+          } else {
+            roundedRow.push(1);
+            voteCount['1']++
+          }
+        }
+        var rowMode = math.mode(roundedRow);
+        row.push( rowMode );
+        row.push( voteCount[ rowMode ] / roundedRow.length );
+      }
     }
-    // TODO: 
-      // add in meta information about each row of predictions:
-        // max
-        // min
-        // average
-        // mode (only works for categorical predictions)
-        // median
-        // variance amongst predictions
-        // we had plenty of other ideas too. add those in here (or, possibly, even in data-formatter)
-    module.exports.removeIdsFromValidation(args);
+
+    module.exports.writeToFile( args, global.ensembleNamespace.dataMatrix );
+
   },
 
   removeIdsFromValidation: function(args) {
@@ -230,8 +243,8 @@ module.exports = {
     for(var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
       global.ensembleNamespace.dataMatrix[i].shift();
     }
-
-    module.exports.writeToFile( args, global.ensembleNamespace.dataMatrix );
+    module.exports.validationFeatureEngineering(args);
+    
   },
 
   averageResults: function(args) {
