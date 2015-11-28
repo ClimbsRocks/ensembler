@@ -8,6 +8,7 @@ var summary = {};
 var ensembleMethods = require('./ensembleMethods.js');
 var fastCSV = require('fast-csv');
 var pythonUtils = require('./pythonUtils.js');
+var math = require('mathjs');
 
 global.ensembleNamespace.summarizedAlgorithmNames = [];
 global.ensembleNamespace.predictionsMatrix = [];
@@ -195,6 +196,22 @@ module.exports = {
   },
 
   validationFeatureEngineering: function(args) {
+
+    // iterate through all the predictions, creating some new features for each row
+
+    for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
+      var row = global.ensembleNamespace.dataMatrix[i];
+      row.push( math.mean(row) );
+      row.push( math.median(row) );
+      row.push( math.max(row) );
+      row.push( math.min(row) );
+
+      row.push( math.max(row) - math.min(row) ); // this is the total range of predictions
+
+      row.push( math.sum(row) );
+      row.push( math.var(row) ); //this is the variance
+
+    }
     // TODO: 
       // add in meta information about each row of predictions:
         // max
