@@ -147,35 +147,45 @@ module.exports = {
       }
     }
 
-    // the first row holds the validationScore and trainingScore for this algorithm
-    var scoresObj = {
-      scores: data[0],
-      fileName: fileName
-    };
+    // make sure we have the right number of predictions here
+    if( data.length - 2 === global.ensembleNamespace.dataMatrix.length ) {
+      // the first row holds the validationScore and trainingScore for this algorithm
+      var scoresObj = {
+        scores: data[0],
+        fileName: fileName
+      };
 
-    global.ensembleNamespace.scores.push(scoresObj);
+      global.ensembleNamespace.scores.push(scoresObj);
 
 
-    // TODO: verify matrix's shape to make sure we have the same number of predictions across all classifiers.
-    for( var i = 2; i < data.length; i++ ){
-      var hasErrors = false;
-      // data[i] is an array holding two values: the id for that row, and the actual predicted result.
-      var id = data[i][0];
-      var prediction = data[i][1];
+      // TODO: verify matrix's shape to make sure we have the same number of predictions across all classifiers.
+      for( var i = 2; i < data.length; i++ ){
+        var hasErrors = false;
+        // data[i] is an array holding two values: the id for that row, and the actual predicted result.
+        var id = data[i][0];
+        var prediction = data[i][1];
 
-      // TODO: verification. make sure this ID is the same as the id stored as the first item in the dataMatrix[i] array.
-      // our predictions files have two non-predictions lines (scores, and headerRow)
-      // our actual validation data file (saved as a scipy.sparse matrix in python), does not
-      // therefore, we need to bump up each item by two, to match up to the format of the data we already have in python
-      try {
-        global.ensembleNamespace.dataMatrix[i - 2].push(prediction);
+        // TODO: verification. make sure this ID is the same as the id stored as the first item in the dataMatrix[i] array.
+        // our predictions files have two non-predictions lines (scores, and headerRow)
+        // our actual validation data file (saved as a scipy.sparse matrix in python), does not
+        // therefore, we need to bump up each item by two, to match up to the format of the data we already have in python
+        try {
+          global.ensembleNamespace.dataMatrix[i - 2].push(prediction);
 
-      } catch(err) {
-        hasErrors = true;
-        console.log(i);
-        console.error(err);
+        } catch(err) {
+          hasErrors = true;
+          console.log(i);
+          console.error(err);
+        }
       }
+      
+    } else {
+      console.error('this file had a different number of predictions than we expected:');
+      console.error(fileName);
+      console.error('expected number of predictions:',global.ensembleNamespace.dataMatrix.length);
+      console.error('actual number of predictions:',data.length);
     }
+
 
     // remove reference to data to help garbage collection start more rapidly.
     data = null;
@@ -199,6 +209,9 @@ module.exports = {
 
     // iterate through all the predictions, creating some new features for each row
 
+    console.log('the 0th row in the assembled stage 0 predictions:');
+    console.log(global.ensembleNamespace.dataMatrix[0]);
+
     for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
       var row = global.ensembleNamespace.dataMatrix[i];
       row.push( math.mean(row) );
@@ -212,6 +225,8 @@ module.exports = {
       row.push( math.var(row) ); //this is the variance
 
       // calculate the consensus vote, as well as what percent of classifiers had that vote. 
+      // console.log('global.argv');
+      // console.log(global.argv)
       if( global.argv.fileNames.problemType === 'category') {
         var roundedRow = [];
         var voteCount = {
@@ -238,12 +253,18 @@ module.exports = {
   },
 
   removeIdsFromValidation: function(args) {
+    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+    console.log('inside removeIdsFromValidation');
 
     // the first item in each row is the id. we want to remove that. 
     for(var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
       global.ensembleNamespace.dataMatrix[i].shift();
     }
-    module.exports.validationFeatureEngineering(args);
+    console.log(global.ensembleNamespace.dataMatrix[0]);
+    console.log(global.ensembleNamespace.dataMatrix[10]);
+    console.log(global.ensembleNamespace.dataMatrix[10000]);
+    console.log(global.ensembleNamespace.dataMatrix[15000]);
+    // module.exports.validationFeatureEngineering(args);
     
   },
 
