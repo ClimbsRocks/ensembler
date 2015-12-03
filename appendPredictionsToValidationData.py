@@ -28,12 +28,24 @@ with open(predictionsFile, 'rU') as predictionsFile:
     for row in inputRows:
         predictions.append(row)
 
+for rowIdx, predictionRow in enumerate(predictions):
+    printParent('predictionRow in predictions')
+    printParent(predictionRow)
+    for colIdx, prediction in enumerate(predictionRow):
+        try:
+            predictions[rowIdx][colIdx] = float(prediction)
+        except:
+            printParent(repr(prediction))
+            raise
 
 # scipy.sparse matrices work on np.arrays, not python lists
 # they also do not deal well with mixed data types
 # TODO: this is potentially fragile as we expand to more and more problem types. 
     # the predictions files will likely always be floats, but the validation data oftentimes won't be
-predictions = np.array(predictions, dtype=float)
+try:
+    predictions = np.array(predictions, dtype=float)
+except:
+    predictions = np.array(predictions)
 predictions = csr_matrix(predictions)
 
 validationData = load_sparse_csr(validationData)
