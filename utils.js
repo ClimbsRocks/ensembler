@@ -106,7 +106,7 @@ module.exports = {
       if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
 
         if( args.validationRound ) {
-          module.exports.validationFeatureEngineering(args);
+          module.exports.removeIdsFromValidation(args);
         } else {
           module.exports.averageResults(args);        
         }
@@ -190,27 +190,12 @@ module.exports = {
     // remove reference to data to help garbage collection start more rapidly.
     data = null;
 
-    global.ensembleNamespace.finishedFiles++;
-    console.log('finishedFiles:', global.ensembleNamespace.finishedFiles);
-    console.log('fileCount:',global.ensembleNamespace.fileCount);
-    if(global.ensembleNamespace.finishedFiles === global.ensembleNamespace.fileCount) {
-
-      if( args.validationRound ) {
-        module.exports.removeIdsFromValidation(args);        
-      } else {
-        module.exports.averageResults(args);        
-      }
-
-    }
-    
+    global.ensembleNamespace.finishedFiles++;    
   },
 
   validationFeatureEngineering: function(args) {
 
     // iterate through all the predictions, creating some new features for each row
-
-    console.log('the 0th row in the assembled stage 0 predictions:');
-    console.log(global.ensembleNamespace.dataMatrix[0]);
 
     for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
       var row = global.ensembleNamespace.dataMatrix[i];
@@ -253,18 +238,12 @@ module.exports = {
   },
 
   removeIdsFromValidation: function(args) {
-    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-    console.log('inside removeIdsFromValidation');
 
     // the first item in each row is the id. we want to remove that. 
     for(var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
       global.ensembleNamespace.dataMatrix[i].shift();
     }
-    console.log(global.ensembleNamespace.dataMatrix[0]);
-    console.log(global.ensembleNamespace.dataMatrix[10]);
-    console.log(global.ensembleNamespace.dataMatrix[10000]);
-    console.log(global.ensembleNamespace.dataMatrix[15000]);
-    // module.exports.validationFeatureEngineering(args);
+    module.exports.validationFeatureEngineering(args);
     
   },
 
