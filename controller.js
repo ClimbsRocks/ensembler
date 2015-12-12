@@ -47,6 +47,7 @@ module.exports = {
 
   // this method is primarily designed to work with machineJS. It is simply a way of determining when we will invoke makeEnsemble. 
   startListeners: function(numOfAlgosToWaitOn, args) {
+    console.log('args inside startListeners in ensembler:', args);
 
     function checkIfFinished() {
       if( finishedAlgos === numOfAlgosToWaitOn ) {

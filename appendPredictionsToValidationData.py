@@ -29,8 +29,8 @@ with open(predictionsFile, 'rU') as predictionsFile:
         predictions.append(row)
 
 for rowIdx, predictionRow in enumerate(predictions):
-    printParent('predictionRow in predictions')
-    printParent(predictionRow)
+    # printParent('predictionRow in predictions')
+    # printParent(predictionRow)
     for colIdx, prediction in enumerate(predictionRow):
         try:
             predictions[rowIdx][colIdx] = float(prediction)
