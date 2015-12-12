@@ -52,7 +52,7 @@ Ensembling also reduces the risk of overfitting to the data, because introducing
 ### API
 There are two public methods, `createEnsemble`, and `startListeners`. 
 
-`startListeners` simply waits to invoke `createEnsemble` until it has heard the required number of 'algoFinishedTraining' events fire. This is mostly a convenience function for ppComplete, though you may find it useful. 
+`startListeners` simply waits to invoke `createEnsemble` until it has heard the required number of 'algoFinishedTraining' events fire. This is mostly a convenience function for machineJS, though you may find it useful. 
 
 #### `createEnsemble`
 This is the primary method ensembler makes available. 

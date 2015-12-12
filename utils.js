@@ -330,7 +330,7 @@ module.exports = {
         try {
           // ideally, we want ensembler to be run with machineJS
           // attempt to load in the parent machineJS, which has ensembler installed as an npm dependency
-          var machineJSPath = path.join(global.argv.ppCompleteLocation, 'ppLib.js');
+          var machineJSPath = path.join(global.argv.machineJSLocation, 'machineJS.js');
           var machineJS = require(machineJSPath);
         } catch(err) {
           console.log('heard an error trying to load up machineJS from the parent directory, rather than from a node_module');
@@ -377,7 +377,7 @@ module.exports = {
       } else {
         console.log('We have just written the final predictions to a file that is saved at:\n' + writeFileName );
         console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
-        // this is designed to work with ppComplete to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
+        // this is designed to work with machineJS to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
         process.emit('killAll');
         
       }
