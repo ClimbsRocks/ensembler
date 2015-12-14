@@ -35,13 +35,13 @@ module.exports = {
   readFiles: function(args, files) {
     global.ensembleNamespace.fileCount = files.length;
     global.ensembleNamespace.finishedFiles = 0;
+    global.ensembleNamespace.dataMatrix = [];
 
     console.log('We are reading in all the relevant predictions files. This might take a little while if you\'ve made many predictions.')
 
     module.exports.readOneFile(args, files[0], files, module.exports.processOneFilesDataMatrix);
   
 
-    // handles off by one errors
     if(global.ensembleNamespace.fileCount === 0) {
       // inside of readOneFile, the first thing we do is check (synchronously), whether that file is eligible or not
         // eligibility meaning is it a .csv file, and does it have our fileNameIdentifier in the file's name?
@@ -311,7 +311,6 @@ module.exports = {
   },
 
   writeToFile: function(args, results) {
-    console.log('inside writeToFile');
     // TODO: refactor to use the csv module.
 
     if( args.validationRound) {
@@ -351,6 +350,7 @@ module.exports = {
           outputFile: aggregatedValidationFile
         };
 
+
         // pythonUtils(fileNamesObj) will start a python shell and append the data we have just written to the end (hstack) of the validation data
         // once that's done, it will invoke the callback, which restarts machineJS
         var pyChild = pythonUtils(fileNamesObj, function() {
@@ -362,6 +362,7 @@ module.exports = {
           global.argv.devEnsemble = false;
           global.argv.alreadyFormatted = true;
           global.argv.dev = false;
+          global.argv.ensemble = false;
 
           // have significantly fewer rounds, but make each round more meaningful, with more iterations per round
           global.argv.numRounds = 1;
