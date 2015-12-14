@@ -2,23 +2,26 @@ global.ensembleNamespace = {};
 var fs = require('fs');
 var path = require('path');
 var utils = require('./utils.js');
-var shutDown = require('./shutDown.js');
+var startShutdownListeners = require('./startShutdownListeners.js');
 
 
 module.exports = {
   createEnsemble: function(args) {
-    shutDown();
+    startShutdownListeners();
     // we're actually going to be running through ensembler twice: 
       // once for the validation data set
       // once for the actual predictions data set
     // if the user doesn't pass in a value, we'll assume they just want predictions
+    args.rawInputFolder = args.inputFolder;
     if( args.validationRound === undefined ) {
       args.validationRound = false;
     } else if(args.validationRound) {
       // this is the case that validationRound is true
       // save the original input folder, so we can access it later to pass back to machineJS
-      args.rawInputFolder = args.inputFolder;
       args.inputFolder = path.join(args.inputFolder, 'validation');
+    } else {
+      args.inputFolder = path.join(args.inputFolder, '..', 'ensembledPredictions');
+      console.log('args.inputFolder in the case that this is not the validationRound:',args.inputFolder);
     }
 
     var fileNameIdentifier = args.fileNameIdentifier;
