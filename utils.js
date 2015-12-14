@@ -362,6 +362,10 @@ module.exports = {
           global.argv.devEnsemble = false;
           global.argv.alreadyFormatted = true;
           global.argv.dev = false;
+
+          // have significantly fewer rounds, but make each round more meaningful, with more iterations per round
+          global.argv.numRounds = 1;
+          global.argv.numIterationsPerRound = 30;
           // now pass the validation set back to machineJS to have it choose how to ensemble all these early predictions together!
           machineJS(global.argv);
         });
