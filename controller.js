@@ -29,28 +29,14 @@ module.exports = {
 
     // generateSummary reads in the prediction files from each classifier, and loads them into an in-memory object that matches them all up by rowID. 
     // it takes a callback that will be invoked after reading all the files and loading in all the data. 
+    // CLEAN: I don't think we need to pass in a callback anymore
     utils.generateSummary( args, function() {
 
-      // FUTURE: 
-        // 1. Test all combinations of number of classifiers among the ones we've trained
-          // 2. for each combination of classifiers, run every single one of our ensembling methods
-          // 3. pick the [combination of classifiers, ensembling method] pair that has the lowest error rate across the data set
-
-      // as outlined above, at some point in the future, bestClassifierList will be a calculated value. 
-      // for now, just use all the classifiers whose data we have read in. 
-      // var bestClassifierList = global.ensembleNamespace.summarizedAlgorithmNames;
-
-      // calculateAggregatedPredictions uses the best combination of classifiers and ensembling method to create our final prediction. 
-      // until we are ready for our version 3.0 release, we will simply pass it all of our classifiers, with the ensemble method of bagging them together. 
-      // var results = utils.calculateAggregatedPredictions(bestClassifierList, 'average');
-      
-      // utils.writeToFile(fileNameIdentifier, args, results);
     });
   },
 
   // this method is primarily designed to work with machineJS. It is simply a way of determining when we will invoke makeEnsemble. 
   startListeners: function(numOfAlgosToWaitOn, args) {
-    console.log('args inside startListeners in ensembler:', args);
 
     function checkIfFinished() {
       if( finishedAlgos === numOfAlgosToWaitOn ) {
