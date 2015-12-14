@@ -224,6 +224,7 @@ module.exports = {
       // console.log('global.argv');
       // console.log(global.argv)
       if( global.argv.fileNames.problemType === 'category') {
+        // TODO: generalize this to work with multi-category predictions
         var roundedRow = [];
         var voteCount = {
           0 : 0,
@@ -240,6 +241,7 @@ module.exports = {
         }
         var rowMode = math.mode(roundedRow);
         row.push( rowMode );
+        // what percent of this row does that mode represent?
         row.push( voteCount[ rowMode ] / roundedRow.length );
       }
     }
@@ -258,31 +260,20 @@ module.exports = {
     
   },
 
-  aggregateResults: function(args) {
-    if( global.argv.fileNames.problemType === 'multi-category' ) {
-      // get the mode of the predicted values
-
-    } else {
-      module.exports.averageResults(args);
-    }
-  },
-
   averageResults: function(args) {
     var idAndPredictionsByRow = [];
     for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++ ) {
 
       var row = global.ensembleNamespace.dataMatrix[i];
 
-
-      var sum = 0;
-      // the first item in each row is the ID for that row, so we will ignore that while summing.
-      for(var j = 1; j < row.length; j++) {
-        sum += parseFloat( row[j] );
+      // the first value in each row is the ID for that row, so we will run this aggregation over all values in the row except the first one
+      if( global.argv.fileNames.problemType === 'multi-category' ) {
+        var rowResult = math.mode(row.slice(1));
+      } else {
+        var rowResult = math.mean(row.slice(1));
       }
-      var rowAverage = sum / row.length;
 
-      // again, the first value in each row is the ID for that row.
-      idAndPredictionsByRow.push([row[0], rowAverage]);
+      idAndPredictionsByRow.push([row[0], rowResult]);
     }
 
     global.ensembleNamespace.idAndPredictionsByRow = idAndPredictionsByRow;
@@ -385,8 +376,8 @@ module.exports = {
           global.argv.ensemble = false;
 
           // have significantly fewer rounds, but make each round more meaningful, with more iterations per round
-          global.argv.numRounds = 1;
-          global.argv.numIterationsPerRound = 3;
+          global.argv.numRounds = 2;
+          global.argv.numIterationsPerRound = 30;
           // now pass the validation set back to machineJS to have it choose how to ensemble all these early predictions together!
           machineJS(global.argv);
         });
