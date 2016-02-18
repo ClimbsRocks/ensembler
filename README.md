@@ -1,9 +1,10 @@
 # ensembler
 > automatically ensemble machine learning predictions together
-
-## NOTE: Right now this repo is under active development as of October 2015. Only the APIs section is accurate. The rest will be written over time. Currently, it only averages together the results of different predictors. 
-
 If you already have a bunch of classifiers trained, ensembler will go through and find the best way of ensembling them together. 
+
+## NOTE: Right now this repo is designed to work with machineJS. 
+
+There's no reason it couldn't handle automatic ensembling of predictions from other sources. If somebody wants to make those modifications, that would be a wonderful PR!
 
 ### What does ensembling mean?
 Ensembling, sometimes referred to as SYNONYMS_HERE, probably means exactly what you think it does: taking many different machine learning algorithms, and putting them together into one super predictor. 
