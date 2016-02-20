@@ -16,28 +16,6 @@ Ensembling is frequently more accurate than any single algorithm can be. This is
   - generalization
 Ensembles, because they provide the consensus view of several experts (trained classifiers), will frequently avoid overfitting problems that any one classifier might face. 
 
-### Risk Minimization
-ensembler will go through and test your predictions files in two primary ways:
-1. It will go through all possible combinations of trained classifiers. 
-  Example: Say your classifiers look like this: 
-  `['neuralNetwork','randomForest','SVM']`
-  This repo then would try all possible combinations of those classifiers:
-  `['neuralNetwork']`  `['neuralNetwork','randomForest']` `['neuralNetwork', 'randomForest','SVM']`  `['randomForest']`  `['randomForest','SVM']` `['SVM']`  `['SVM','neuralNetwork']`
-2. For each of those 7 combinations of classifiers, it will go through and try all of the different ensembling methodologies in the ensembleMethods.js file. 
-  Examples include:
-  - Picking the highest value
-  - Picking the lowest value
-  - Picking the most extreme value
-  - Picking the most middle value
-  - Picking the value from the most accurate classifier in the group
-  - Picking the value from the two most accurate classifiers in the group
-  - Taking a simple majority consensus for classification problems
-  - Taking a weighted average
-  - Taking a simple average (the only method currently implemented)
-  - Maybe some method that penalizes algorithms that overfit the training data, and perform relatively poorly on the test data? 
-  - Maybe a method that increases the movement away from average slightly? So if we have a value of 0.8, and the average is 0.5, we would bump it up to 0.85 or something. 
-  - Maybe a method that moves each individual prediction slightly closer to the average of the whole dataset? 
-
 What this does, effectively, is  minimize the risk of including inaccurate classifiers. If the data says they're not helpful in making predictions against the dataset, we will not include them. 
 
 This, then, lets you go off and train as many classifiers as you would like, over whatever time period you like, and trust that ensembler will find the best combination of them for you. 
@@ -45,7 +23,10 @@ This, then, lets you go off and train as many classifiers as you would like, ove
 Ensembling also reduces the risk of overfitting to the data, because introducing more classifiers will bring predicted values closer to an average prediction across multiple sources, rather than the (possibly highly biased) opinion of a single classifier. 
 
 ## Installation
-
+`npm install ensembler`
+ensembler is automatically installed as a dependency of machineJS. 
+<!-- 
+The following is all possibly outdated information, and definitely misleading. ensembler right now only works with machineJS, so usage instructions are not relevant. 
 
 ## Use
 
@@ -118,3 +99,4 @@ The 'Observed Value' column will never be in the output file.
 The output file will be a .csv filetype. 
 
 
+ -->
