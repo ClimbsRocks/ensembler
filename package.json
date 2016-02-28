@@ -1,6 +1,6 @@
 {
   "name": "ensembler",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Ensemble together your machine learning algorithms automatically!",
   "main": "controller.js",
   "scripts": {
