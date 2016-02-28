@@ -110,10 +110,11 @@ module.exports = {
       });
     } else {
       // if the file is not a .csv file, we will ignore it, and remove it from our count of files to parse
-      console.log('found an ineligible file');
+      console.log('found a file that is not a prediction file:', fileName);
+      console.log('this is only a concern if you expected',fileName, 'to be a file filled with useful predictions on your current data set.')
       global.ensembleNamespace.fileCount--;
-      console.log('finishedFiles:', global.ensembleNamespace.finishedFiles);
-      console.log('fileCount:',global.ensembleNamespace.fileCount);
+      // console.log('finishedFiles:', global.ensembleNamespace.finishedFiles);
+      // console.log('fileCount:',global.ensembleNamespace.fileCount);
       if(global.ensembleNamespace.finishedFiles >= global.ensembleNamespace.fileCount) {
 
         if( args.validationRound ) {
