@@ -63,7 +63,7 @@ module.exports = {
           if( args.validationRound ) {
             module.exports.removeIdsFromValidation(args);
           } else {
-            module.exports.averageResults(args);        
+            module.exports.filterEnsembledPredictions(args);        
           }
 
         }
@@ -120,7 +120,7 @@ module.exports = {
         if( args.validationRound ) {
           module.exports.removeIdsFromValidation(args);
         } else {
-          module.exports.averageResults(args);        
+          module.exports.filterEnsembledPredictions(args);        
         }
 
       } else {
@@ -268,22 +268,52 @@ module.exports = {
 
   // gather only those results that are within 2% of our most accurate model
   filterEnsembledPredictions: function(args) {
-    // insert this into the flow before averageResults
     // find our max accuracy score
+    var maxScore = 0;
+    for( var i = 0; i < global.ensembleNamespace.scores.length; i++ ) {
+      var row = global.ensembleNamespace.scores[i];
+      if( row[0] > maxScore ) {
+        maxScore = row[0];
+      }
+    }
+
     // iterate through the whole scores array. 
       // map each score to true or false marking whether it is within 2% of our most accurate model
+    var acceptableModels = [];
+    for( var j = 0; j < global.ensembleNamespace.scores.length; j++ ) {
+      var row = global.ensembleNamespace.scores[i];
+      if( row[0] >= maxScore * .98 ) {
+        acceptableModels.push(true);
+      } else {
+        acceptableModels.push(false);
+      }
+    }
+
     // iterate through our predictions
       // save only those predictions that come from our best models
-    // save these results into global.ensembleNamespace.bestModelsPredictions
-    // modify averageResults to run from bestModelsPredictions instead of dataMatrix
-    global.ensembleNamespace.scores
+
+    var acceptablePredictions = [];
+    for( var k = 0; k < global.ensembleNamespace.dataMatrix.length; k++ ) {
+      var row = global.ensembleNamespace.dataMatrix[k];
+      acceptablePredictions.push([]);
+
+      for( var l = 0; l < row.length; l++ ) {
+        if( acceptableModels[l]) {
+          acceptablePredictions[k].push( row[l] );
+        }
+      }
+    }
+
+    global.ensembleNamespace.acceptablePredictions = acceptablePredictions;
+
+    module.exports.averageResults(args);
   },
 
   averageResults: function(args) {
     var idAndPredictionsByRow = [];
-    for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++ ) {
+    for( var i = 0; i < global.ensembleNamespace.acceptablePredictions.length; i++ ) {
 
-      var row = global.ensembleNamespace.dataMatrix[i];
+      var row = global.ensembleNamespace.acceptablePredictions[i];
 
       // the first value in each row is the ID for that row, so we will run this aggregation over all values in the row except the first one
       if( global.argv.fileNames.problemType === 'multi-category' ) {
