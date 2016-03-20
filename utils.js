@@ -240,6 +240,11 @@ module.exports = {
             voteCount['1']++
           }
         }
+
+        // push in the raw counts for each category
+        row.push(voteCount['0']);
+        row.push(voteCount['1']);
+
         var rowMode = math.mode(roundedRow);
         row.push( rowMode );
         // what percent of this row does that mode represent?
@@ -259,6 +264,19 @@ module.exports = {
     }
     module.exports.validationFeatureEngineering(args);
     
+  },
+
+  // gather only those results that are within 2% of our most accurate model
+  filterEnsembledPredictions: function(args) {
+    // insert this into the flow before averageResults
+    // find our max accuracy score
+    // iterate through the whole scores array. 
+      // map each score to true or false marking whether it is within 2% of our most accurate model
+    // iterate through our predictions
+      // save only those predictions that come from our best models
+    // save these results into global.ensembleNamespace.bestModelsPredictions
+    // modify averageResults to run from bestModelsPredictions instead of dataMatrix
+    global.ensembleNamespace.scores
   },
 
   averageResults: function(args) {
