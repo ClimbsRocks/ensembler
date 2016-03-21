@@ -30,11 +30,12 @@ var attachListeners = function(pyShell) {
   });
 };
 
-module.exports = function( argsObject, callback ) {
+module.exports = function( argsObject, scriptName, callback ) {
 
+  console.log('started running pythonUtils.js')
   var pyOptions = makePyOptions( JSON.stringify( argsObject ) );
 
-  var pyController = PythonShell.run('./appendPredictionsToValidationData.py', pyOptions, function(err) {
+  var pyController = PythonShell.run(path.join('./', scriptName), pyOptions, function(err) {
     if(err) {
       // exit code null means we killed the python child process intentionally
       if(err.exitCode !== null) {
@@ -43,13 +44,15 @@ module.exports = function( argsObject, callback ) {
       }
     } 
 
-    process.emit('finishedFormatting');
+    console.log('finished running pythonUtils.js')
+
     if (typeof callback === 'function' ) {
       callback();
     }
     
   });
 
+  // attach the message listeners to handle messages sent from python
   attachListeners(pyController);
   return pyController;
 };
