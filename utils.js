@@ -40,7 +40,7 @@ module.exports = {
     console.log('We are reading in all the relevant predictions files. This might take a little while if you\'ve made many predictions.')
 
     module.exports.readOneFile(args, files[0], files, module.exports.processOneFilesDataMatrix);
-  
+
 
     if(global.ensembleNamespace.fileCount === 0) {
       // inside of readOneFile, the first thing we do is check (synchronously), whether that file is eligible or not
@@ -205,50 +205,121 @@ module.exports = {
     global.ensembleNamespace.finishedFiles++;    
   },
 
+  getAllClasses: function() {
+    var allClasses = {};
+    for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
+      var row = global.ensembleNamespace.dataMatrix[i];
+      for( var j = 0; j < row.length; j++ ) {
+        allClasses[row[j]] = row[j];
+      }
+    }
+    return allClasses;
+    
+  },
+
+  classesToIndexMap: function(allClasses) {
+    var classes = Object.keys(allClasses);
+    for( var key in allClasses ) {
+      allClasses[key] = classes.indexOf(key);
+    }
+    return allClasses;
+  },
+
+  invert: function(obj) {
+    var inverted = {};
+    for(var key in obj) {
+      inverted[obj[key]] = key;
+    }
+    return inverted;
+  },
+
+  getXthPopularClass: function(predictionCounts, indexToClassesMap, sortedVoteCounts, x) {
+
+    // once we know that the most voted class received, say 18 votes, find which index position received 18 votes
+    var voteIndex = predictionCounts.indexOf(sortedVoteCounts[x]);
+
+    // then translate that index position to the class name
+    var targetClass = indexToClassesMap[voteIndex];
+
+    return targetClass;
+
+  },
+
   validationFeatureEngineering: function(args) {
+    var allClasses = module.exports.getAllClasses();
+    var classesToIndexMap = module.exports.createClassesMap(allClasses);
+    var indexToClassesMap = module.exports.invert(classesToIndexMap);
 
     // iterate through all the predictions, creating some new features for each row
 
     for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
       var row = global.ensembleNamespace.dataMatrix[i];
-      row.push( math.mean(row) );
-      row.push( math.median(row) );
-      row.push( math.max(row) );
-      row.push( math.min(row) );
+      // for now, we are not getting the probabilities for multiclass problems, just the prediction
+      if( problemType === 'multiclass' ) {
+        
+        // create a blank array with a placeholder 0 as the starting count for each class
+        var predictionCounts = Array(classesToIndexMap.length).fill(0);
 
-      row.push( math.max(row) - math.min(row) ); // this is the total range of predictions
+        // gather the total count of each different prediction
+        for(var j = 0; j < row.length; j++ ) {
+          var prediction = row[j];
+          predictionCounts[classesToIndexMap[prediction]]++;
 
-      row.push( math.sum(row) );
-      row.push( math.var(row) ); //this is the variance
-
-      // calculate the consensus vote, as well as what percent of classifiers had that vote. 
-      // console.log('global.argv');
-      // console.log(global.argv)
-      if( global.argv.fileNames.problemType === 'category') {
-        // TODO: generalize this to work with multi-category predictions
-        var roundedRow = [];
-        var voteCount = {
-          0 : 0,
-          1 : 0
-        };
-        for(var j = 0; j < row.length; j++) {
-          if( row[j] < 0.5 ) {
-            roundedRow.push(0);
-            voteCount['0']++
-          } else {
-            roundedRow.push(1);
-            voteCount['1']++
-          }
         }
 
-        // push in the raw counts for each category
-        row.push(voteCount['0']);
-        row.push(voteCount['1']);
+        row = row.concat(predictionCounts);
 
-        var rowMode = math.mode(roundedRow);
-        row.push( rowMode );
-        // what percent of this row does that mode represent?
-        row.push( voteCount[ rowMode ] / roundedRow.length );
+        // get the vote counts, sorted from most to least
+        var sortedVoteCounts = predictionCounts.sort().reverse();
+
+        // get the three most highly voted classes for this row
+        for( var k = 0; k < 3; k++) {
+          var kthMostPopularClass = module.exports.getXthPopularClass(predictionCounts, indexToClassesMap, sortedVoteCounts, k);
+          row.push( kthMostPopularClass );
+        }
+
+
+      } else {
+        row.push( math.mean(row) );
+        row.push( math.median(row) );
+        row.push( math.max(row) );
+        row.push( math.min(row) );
+
+        row.push( math.max(row) - math.min(row) ); // this is the total range of predictions
+
+        row.push( math.sum(row) );
+        row.push( math.var(row) ); //this is the variance
+
+        // calculate the consensus vote, as well as what percent of classifiers had that vote. 
+        // console.log('global.argv');
+        // console.log(global.argv)
+        if( global.argv.fileNames.problemType === 'category') {
+          // TODO: generalize this to work with multi-category predictions
+          var roundedRow = [];
+          var voteCount = {
+            0 : 0,
+            1 : 0
+          };
+          for(var j = 0; j < row.length; j++) {
+            if( row[j] < 0.5 ) {
+              roundedRow.push(0);
+              voteCount['0']++
+            } else {
+              roundedRow.push(1);
+              voteCount['1']++
+            }
+          }
+
+          // push in the raw counts for each category
+          row.push(voteCount['0']);
+          row.push(voteCount['1']);
+
+          var rowMode = math.mode(roundedRow);
+          row.push( rowMode );
+          // what percent of this row does that mode represent?
+          row.push( voteCount[ rowMode ] / roundedRow.length );
+
+        }
       }
     }
 
@@ -279,41 +350,41 @@ module.exports = {
 
     // iterate through the whole scores array. 
       // map each score to true or false marking whether it is within 2% of our most accurate model
-    var acceptableModels = [];
-    for( var j = 0; j < global.ensembleNamespace.scores.length; j++ ) {
-      var row = global.ensembleNamespace.scores[i];
-      if( row[0] >= maxScore * .98 ) {
-        acceptableModels.push(true);
-      } else {
-        acceptableModels.push(false);
+      var acceptableModels = [];
+      for( var j = 0; j < global.ensembleNamespace.scores.length; j++ ) {
+        var row = global.ensembleNamespace.scores[i];
+        if( row[0] >= maxScore * .98 ) {
+          acceptableModels.push(true);
+        } else {
+          acceptableModels.push(false);
+        }
       }
-    }
 
     // iterate through our predictions
       // save only those predictions that come from our best models
 
-    var acceptablePredictions = [];
-    for( var k = 0; k < global.ensembleNamespace.dataMatrix.length; k++ ) {
-      var row = global.ensembleNamespace.dataMatrix[k];
-      acceptablePredictions.push([]);
+      var acceptablePredictions = [];
+      for( var k = 0; k < global.ensembleNamespace.dataMatrix.length; k++ ) {
+        var row = global.ensembleNamespace.dataMatrix[k];
+        acceptablePredictions.push([]);
 
-      for( var l = 0; l < row.length; l++ ) {
-        if( acceptableModels[l]) {
-          acceptablePredictions[k].push( row[l] );
+        for( var l = 0; l < row.length; l++ ) {
+          if( acceptableModels[l]) {
+            acceptablePredictions[k].push( row[l] );
+          }
         }
       }
-    }
 
-    global.ensembleNamespace.acceptablePredictions = acceptablePredictions;
+      global.ensembleNamespace.acceptablePredictions = acceptablePredictions;
 
-    module.exports.averageResults(args);
-  },
+      module.exports.averageResults(args);
+    },
 
-  averageResults: function(args) {
-    var idAndPredictionsByRow = [];
-    for( var i = 0; i < global.ensembleNamespace.acceptablePredictions.length; i++ ) {
+    averageResults: function(args) {
+      var idAndPredictionsByRow = [];
+      for( var i = 0; i < global.ensembleNamespace.acceptablePredictions.length; i++ ) {
 
-      var row = global.ensembleNamespace.acceptablePredictions[i];
+        var row = global.ensembleNamespace.acceptablePredictions[i];
 
       // the first value in each row is the ID for that row, so we will run this aggregation over all values in the row except the first one
       if( global.argv.fileNames.problemType === 'multi-category' ) {
@@ -439,13 +510,13 @@ module.exports = {
           // secondly to
             // blend together all the predictions we make from that second round of machineJS. 
 
-      } else {
-        console.log('We have just written the final predictions to a file that is saved at:\n' + writeFileName );
-        console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
+          } else {
+            console.log('We have just written the final predictions to a file that is saved at:\n' + writeFileName );
+            console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
         // this is designed to work with machineJS to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
         process.emit('killAll');
         
       }
     });
-  }
+}
 };
