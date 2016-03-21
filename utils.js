@@ -63,7 +63,7 @@ module.exports = {
           if( args.validationRound ) {
             module.exports.removeIdsFromValidation(args);
           } else {
-            module.exports.filterEnsembledPredictions(args);        
+            module.exports.averageResults(args);        
           }
 
         }
@@ -120,7 +120,7 @@ module.exports = {
         if( args.validationRound ) {
           module.exports.removeIdsFromValidation(args);
         } else {
-          module.exports.filterEnsembledPredictions(args);        
+          module.exports.averageResults(args);        
         }
 
       } else {
@@ -236,6 +236,7 @@ module.exports = {
   getXthPopularClass: function(predictionCounts, indexToClassesMap, sortedVoteCounts, x) {
 
     // once we know that the most voted class received, say 18 votes, find which index position received 18 votes
+    var voteCountToFind = sortedVoteCounts[x];
     var voteIndex = predictionCounts.indexOf(sortedVoteCounts[x]);
 
     // then translate that index position to the class name
@@ -245,9 +246,44 @@ module.exports = {
 
   },
 
+  multiclassFeatureEngineering: function( predictionsToAggregate, classesToIndexMap, indexToClassesMap) {
+    var resultRow = [];
+    // create a blank array with a placeholder 0 as the starting count for each class
+    var predictionCounts = Array(Object.keys(classesToIndexMap).length);
+    for(var z = 0; z < predictionCounts.length; z++) {
+      predictionCounts[z] = 0;
+    }
+
+
+    // gather the total count of each different prediction
+    for(var j = 0; j < predictionsToAggregate.length; j++ ) {
+      var prediction = predictionsToAggregate[j];
+      predictionCounts[classesToIndexMap[prediction]]++;
+
+    }
+
+    resultRow = resultRow.concat(predictionCounts);
+
+
+    // get the vote counts, sorted from most to least
+    var sortedVoteCounts = predictionCounts.slice().sort(function(a,b) {return b - a;});
+
+    // get the three most highly voted classes for this row
+    for( var k = 0; k < 3; k++) {
+      var kthMostPopularClass = module.exports.getXthPopularClass(predictionCounts, indexToClassesMap, sortedVoteCounts, k);
+      resultRow.push( kthMostPopularClass );
+    }
+
+    return resultRow;
+
+  },
+
+  // TODO: investigate if we have the ID in the row at this point or not
   validationFeatureEngineering: function(args) {
+    module.exports.filterEnsembledPredictions(false);
+
     var allClasses = module.exports.getAllClasses();
-    var classesToIndexMap = module.exports.createClassesMap(allClasses);
+    var classesToIndexMap = module.exports.classesToIndexMap(allClasses);
     var indexToClassesMap = module.exports.invert(classesToIndexMap);
 
     // iterate through all the predictions, creating some new features for each row
@@ -255,28 +291,16 @@ module.exports = {
     for( var i = 0; i < global.ensembleNamespace.dataMatrix.length; i++) {
       var row = global.ensembleNamespace.dataMatrix[i];
       // for now, we are not getting the probabilities for multiclass problems, just the prediction
-      if( problemType === 'multiclass' ) {
+      if( global.argv.fileNames.problemType === 'multi-category' ) {
+        var allResults = module.exports.multiclassFeatureEngineering( row, classesToIndexMap, indexToClassesMap);
         
-        // create a blank array with a placeholder 0 as the starting count for each class
-        var predictionCounts = Array(classesToIndexMap.length).fill(0);
+        var bestPredictions = global.ensembleNamespace.acceptablePredictions[i];
+        var bestResults = module.exports.multiclassFeatureEngineering( bestPredictions, classesToIndexMap, indexToClassesMap);
 
-        // gather the total count of each different prediction
-        for(var j = 0; j < row.length; j++ ) {
-          var prediction = row[j];
-          predictionCounts[classesToIndexMap[prediction]]++;
+        // var aggregatedRow = row.concat(allResults, bestResults);
+        var aggregatedRow = allResults.concat(bestResults);
 
-        }
-
-        row = row.concat(predictionCounts);
-
-        // get the vote counts, sorted from most to least
-        var sortedVoteCounts = predictionCounts.sort().reverse();
-
-        // get the three most highly voted classes for this row
-        for( var k = 0; k < 3; k++) {
-          var kthMostPopularClass = module.exports.getXthPopularClass(predictionCounts, indexToClassesMap, sortedVoteCounts, k);
-          row.push( kthMostPopularClass );
-        }
+        global.ensembleNamespace.dataMatrix[i] = aggregatedRow;
 
 
       } else {
@@ -314,7 +338,9 @@ module.exports = {
           row.push(voteCount['0']);
           row.push(voteCount['1']);
 
-          var rowMode = math.mode(roundedRow);
+          // if we have multiple modes in a row, math.mode will return all of them to us
+          // for now, we're taking the simplest approach and just grabbing the first item from the mode
+          var rowMode = math.mode(roundedRow)[0];
           row.push( rowMode );
           // what percent of this row does that mode represent?
           row.push( voteCount[ rowMode ] / roundedRow.length );
@@ -338,27 +364,40 @@ module.exports = {
   },
 
   // gather only those results that are within 2% of our most accurate model
-  filterEnsembledPredictions: function(args) {
+  filterEnsembledPredictions: function(prependTrueForID) {
     // find our max accuracy score
     var maxScore = 0;
     for( var i = 0; i < global.ensembleNamespace.scores.length; i++ ) {
       var row = global.ensembleNamespace.scores[i];
-      if( row[0] > maxScore ) {
-        maxScore = row[0];
+      var score = parseFloat(row.scores[0],10);
+      if( score > maxScore ) {
+        maxScore = score;
       }
     }
+
 
     // iterate through the whole scores array. 
       // map each score to true or false marking whether it is within 2% of our most accurate model
       var acceptableModels = [];
       for( var j = 0; j < global.ensembleNamespace.scores.length; j++ ) {
-        var row = global.ensembleNamespace.scores[i];
-        if( row[0] >= maxScore * .98 ) {
+        var row = global.ensembleNamespace.scores[j];
+        var score = parseFloat(row.scores[0],10);
+        if( score >= maxScore * .98 ) {
           acceptableModels.push(true);
         } else {
           acceptableModels.push(false);
         }
       }
+
+
+    // we invoke this function multiple times at different stages in the process where we may or may not still have the ID column attached
+    if(prependTrueForID) {
+      // the first item in each row is the ID of that row, and we want to keep it
+      // however, the scores row does not have an ID in it, which would lead to an off-by-one error
+      // adding true to the start of the acceptableModels row both ensures that we will keep the id in each row of predictions, and that now our acceptableModels will line up with the predictions in each row, rather than being shfited over by 1
+      acceptableModels.unshift(true);
+    }
+
 
     // iterate through our predictions
       // save only those predictions that come from our best models
@@ -367,28 +406,36 @@ module.exports = {
       for( var k = 0; k < global.ensembleNamespace.dataMatrix.length; k++ ) {
         var row = global.ensembleNamespace.dataMatrix[k];
         acceptablePredictions.push([]);
+      // console.log(row[0]);
 
-        for( var l = 0; l < row.length; l++ ) {
-          if( acceptableModels[l]) {
-            acceptablePredictions[k].push( row[l] );
-          }
+      for( var l = 0; l < row.length; l++ ) {
+        if( acceptableModels[l]) {
+          acceptablePredictions[k].push( row[l] );
         }
       }
+    }
 
-      global.ensembleNamespace.acceptablePredictions = acceptablePredictions;
 
-      module.exports.averageResults(args);
-    },
+    global.ensembleNamespace.acceptablePredictions = acceptablePredictions;
+  },
 
-    averageResults: function(args) {
-      var idAndPredictionsByRow = [];
-      for( var i = 0; i < global.ensembleNamespace.acceptablePredictions.length; i++ ) {
+  averageResults: function(args) {
+    // console.log('global.ensembleNamespace.dataMatrix');
+    // console.log(global.ensembleNamespace.dataMatrix);
 
-        var row = global.ensembleNamespace.acceptablePredictions[i];
+    module.exports.filterEnsembledPredictions(true);
+    
+    var idAndPredictionsByRow = [];
+    for( var i = 0; i < global.ensembleNamespace.acceptablePredictions.length; i++ ) {
+
+      var row = global.ensembleNamespace.acceptablePredictions[i];
 
       // the first value in each row is the ID for that row, so we will run this aggregation over all values in the row except the first one
       if( global.argv.fileNames.problemType === 'multi-category' ) {
-        var rowResult = math.mode(row.slice(1));
+        // if we have multiple modes in a row, math.mode will return all of them to us
+        // for now, we're taking the simplest approach and just grabbing the first item from the mode
+        var rowResult = math.mode(row.slice(1))[0];
+
       } else {
         var rowResult = math.mean(row.slice(1));
       }
@@ -447,11 +494,28 @@ module.exports = {
     if( args.validationRound) {
       var writeFileName = path.join( args.inputFolder, 'idAndPredictions.csv');
     } else {
-      var writeFileName = path.join(args.outputFolder, args.fileNameIdentifier + 'machineJSResults.csv');
+      var writeFileName = path.join(args.outputFolder, args.fileNameIdentifier + 'MachineJSResults.csv');
+
+      // if we have encoded labels (if we were given values to predict of strings like ['NYC','SF','OAK'] instead of the numbers scikit-learn demands, like [0,1,2] ), turn them back into the strings we'd expect to see in the output
+      if( global.argv.fileNames.labelEncoded) {
+        // TODO: reverse the label encoding
+        // console.log(results);
+        var reverseLabelEncoder = module.exports.invert(global.argv.fileNames.labelMapping);
+        for(var i = 0; i < results.length; i++) {
+          var encodedPrediction = results[i][1];
+
+          var labelPrediction = reverseLabelEncoder[encodedPrediction];
+          results[i][1] = labelPrediction;
+        }
+      }
+
+      var finalHeaderRow = [global.argv.fileNames['idHeader'], global.argv.fileNames['outputHeader']]
+      results.unshift(finalHeaderRow);
     }
 
     fastCSV.writeToPath(writeFileName, results)
     .on('finish',function() {
+
 
       if(args.validationRound) {
         console.log('We have just written the accumulated predictions from the stage 0 classifiers to a file that is saved at:\n' + writeFileName );
@@ -482,9 +546,11 @@ module.exports = {
         };
 
 
-        // pythonUtils(fileNamesObj) will start a python shell and append the data we have just written to the end (hstack) of the validation data
+        // appendPredictionsToValidationData.py will start a python shell and append the data we have just written to the end (hstack) of the validation data
         // once that's done, it will invoke the callback, which restarts machineJS
-        var pyChild = pythonUtils(fileNamesObj, function() {
+        var pyChild = pythonUtils(fileNamesObj, 'appendPredictionsToValidationData.py', function() {
+          process.emit('finishedFormatting');
+
           // make sure to pass in the right prettyNames and all that.
           global.argv.validationRound = true;
           global.argv.dataFile = aggregatedValidationFile;
@@ -510,13 +576,34 @@ module.exports = {
           // secondly to
             // blend together all the predictions we make from that second round of machineJS. 
 
-          } else {
-            console.log('We have just written the final predictions to a file that is saved at:\n' + writeFileName );
-            console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
-        // this is designed to work with machineJS to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
-        process.emit('killAll');
-        
+      } else {
+
+        var finalLogAndShutdown = function() {
+          console.log('We have just written the final predictions to a file that is saved at:\n' + writeFileName );
+          console.log('Thanks for letting us help you on your machine learning journey! Hopefully this freed up more of your time to do the fun parts of ML. Pull Requests to make this even better are always welcome!');
+
+          // this is designed to work with machineJS to ensure we have a proper shutdown of any stray childProcesses that might be going rogue on us. 
+          process.emit('killAll');
+        }
+
+
+        if(global.argv.matrixOutput) {
+          console.log('inside matrixOutput')
+
+          var pythonArgs = {
+            resultsFile: writeFileName, //a single column with our final predictions on the test data
+            matrixOutputFolder: args.outputFolder,
+            outputFileName: args.fileNameIdentifier + 'MatrixFinalOutputMachineJSResults.csv',
+          };
+          pythonUtils(pythonArgs, 'matrixOutput.py', function() {
+            console.log('we have written the data in a matrix output format in the following file:');
+            finalLogAndShutdown();
+          });
+        } else {
+          finalLogAndShutdown();
+        }
+
       }
     });
-}
+  }
 };
