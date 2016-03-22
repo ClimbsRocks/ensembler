@@ -471,7 +471,8 @@ module.exports = {
     fse.mkdirpSync( bestFolder );
 
     // copy our 5 best scores into their own folder. this lets us see quickly which algos worked, and then have our best results easily available for analysis.
-    for( var i = 0; i < 5; i++) {
+    var bestScoresNum = Math.min(5, global.ensembleNamespace.scores.length);
+    for( var i = 0; i < bestScoresNum; i++) {
       var predictionFile = global.ensembleNamespace.scores[i].fileName;
       var sourceFile = path.join( args.inputFolder, predictionFile );
       var destinationFile = path.join( bestFolder, predictionFile );
